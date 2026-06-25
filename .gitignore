@@ -1,0 +1,43 @@
+# Raw hand history files / private data
+*.txt
+!requirements.txt
+
+# Generated reports and outputs
+reports/
+*_report/
+*_reports/
+pool_report*/
+fourbet_report*/
+stake_compare*/
+charts/
+
+# Analyzer outputs
+pool_spots.csv
+pool_summary.csv
+pool_summary_by_*.csv
+fourbet_all.csv
+fourbet_known_cards.csv
+fourbet_summary.csv
+filters_applied.json
+benchmarks_used.json
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE / OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Jupyter / temp
+.ipynb_checkpoints/
+*.tmp
+*.log
