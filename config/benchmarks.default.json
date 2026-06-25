@@ -1,0 +1,121 @@
+{
+  "FOLD_TO_FLOP_CBET": {
+    "metric": "fold_pct",
+    "low": 25.0,
+    "high": 45.0,
+    "low_note": "defenders are very sticky vs flop c-bet; c-bet more value/equity-heavy and plan turns",
+    "high_note": "defenders overfold vs flop c-bet; more bluff/protection c-bets may be available"
+  },
+  "BET_IP_VS_MISSED_FLOP_CB": {
+    "metric": "bet_pct",
+    "low": 45.0,
+    "high": 70.0,
+    "low_note": "pool under-stabs vs missed flop c-bet; check response stats before pure-bluffing more",
+    "high_note": "pool auto-stabs too much vs missed flop c-bet; OOP can check-raise/call more strategically"
+  },
+  "OOP_RESPONSE_VS_IP_FLOP_STAB_AFTER_MISSED_CB": {
+    "metric": "fold_pct",
+    "low": 25.0,
+    "high": 50.0,
+    "low_note": "OOP is sticky vs IP flop stab after missed c-bet; IP stabs should be value/equity-heavy",
+    "high_note": "OOP overfolds vs IP flop stab after missed c-bet; IP can attack more often"
+  },
+  "BET_IP_VS_MISSED_TURN_CB": {
+    "metric": "bet_pct",
+    "low": 45.0,
+    "high": 70.0,
+    "low_note": "pool under-stabs vs missed turn c-bet after calling flop",
+    "high_note": "pool attacks missed turn c-bet very aggressively; OOP turn checks need protection/traps"
+  },
+  "OOP_RESPONSE_VS_IP_TURN_STAB_AFTER_MISSED_CB": {
+    "metric": "fold_pct",
+    "low": 35.0,
+    "high": 60.0,
+    "low_note": "OOP is sticky vs IP turn stab after missed turn c-bet; IP turn stabs need value/equity",
+    "high_note": "OOP overfolds vs IP turn stab after missed turn c-bet; IP can attack turn checks more"
+  },
+  "PFA_TURN_BARREL_AFTER_FLOP_CBET_CALLED": {
+    "metric": "bet_pct",
+    "low": 40.0,
+    "high": 70.0,
+    "low_note": "PFA under-barrels after flop c-bet gets called; possible turn give-up leak",
+    "high_note": "PFA barrels turn very aggressively after flop c-bet gets called; defender can trap/check-raise more"
+  },
+  "PFA_RESPONSE_AFTER_TURN_GIVEUP": {
+    "metric": "fold_pct",
+    "low": 30.0,
+    "high": 60.0,
+    "low_note": "PFA does not fold much after flop c-bet / turn check / facing stab; stabs need equity/value",
+    "high_note": "PFA overfolds after flop c-bet / turn check / facing stab; IP can stab turn aggressively"
+  },
+  "FOLD_TO_TURN_BARREL_AFTER_FLOP_CALL": {
+    "metric": "fold_pct",
+    "low": 35.0,
+    "high": 55.0,
+    "low_note": "defenders are sticky vs turn barrel after calling flop; barrel value/equity-heavy",
+    "high_note": "defenders overfold vs turn barrel after calling flop; turn barrels gain fold equity"
+  },
+  "FOLD_TO_RIVER_BARREL_AFTER_FLOP_TURN_CALL": {
+    "metric": "fold_pct",
+    "low": 40.0,
+    "high": 65.0,
+    "low_note": "defenders call down too much vs river barrel; river value-bet thinner and bluff less",
+    "high_note": "defenders overfold vs river barrel after calling flop+turn; triple barrels may print"
+  },
+  "TURN_PROBE_AFTER_FLOP_CHECKBACK": {
+    "metric": "bet_pct",
+    "low": 35.0,
+    "high": 60.0,
+    "low_note": "OOP under-probes after flop checks through",
+    "high_note": "OOP probes very aggressively after flop checks through; IP checkback range needs protection"
+  },
+  "FOLD_TO_TURN_PROBE": {
+    "metric": "fold_pct",
+    "low": 30.0,
+    "high": 50.0,
+    "low_note": "IP is sticky vs turn probe; probe more value/equity-heavy",
+    "high_note": "IP overfolds vs turn probe; OOP can probe more often"
+  },
+  "DELAYED_CBET_IP": {
+    "metric": "bet_pct",
+    "low": 35.0,
+    "high": 65.0,
+    "low_note": "PFA IP under-delays after checking back flop",
+    "high_note": "PFA IP delayed c-bets very aggressively; OOP can protect turn checking range"
+  },
+  "DELAYED_CBET_OOP": {
+    "metric": "bet_pct",
+    "low": 35.0,
+    "high": 65.0,
+    "low_note": "PFA OOP under-delays after flop checks through",
+    "high_note": "PFA OOP delayed c-bets very aggressively; IP can call/raise more selectively"
+  },
+  "FOLD_TO_DELAYED_CBET_OOP": {
+    "metric": "fold_pct",
+    "low": 35.0,
+    "high": 60.0,
+    "low_note": "OOP is sticky vs delayed c-bet; delayed c-bets should be value/equity-heavy",
+    "high_note": "OOP overfolds vs delayed c-bet; IP delayed c-bets can bluff more"
+  },
+  "FOLD_TO_DELAYED_CBET_IP": {
+    "metric": "fold_pct",
+    "low": 35.0,
+    "high": 60.0,
+    "low_note": "IP is sticky vs delayed c-bet; OOP delayed c-bets should be value/equity-heavy",
+    "high_note": "IP overfolds vs delayed c-bet; OOP delayed c-bets can bluff more"
+  },
+  "FOLD_TO_FLOP_CHECK_RAISE": {
+    "metric": "fold_pct",
+    "low": 30.0,
+    "high": 55.0,
+    "low_note": "bettors do not fold enough vs flop check-raise; x/r should be value/equity-heavy",
+    "high_note": "bettors overfold vs flop check-raise; check-raise bluffs gain value"
+  },
+  "FOLD_TO_TURN_CHECK_RAISE": {
+    "metric": "fold_pct",
+    "low": 40.0,
+    "high": 65.0,
+    "low_note": "bettors continue too much vs turn check-raise; turn x/r should be strong",
+    "high_note": "bettors overfold vs turn check-raise; high-leverage turn x/r bluffs may print"
+  }
+}
