@@ -4,7 +4,7 @@ CoinPoker-specific, privacy-conscious population analysis for Pot-Limit Omaha ha
 
 [View the case study](docs/index.html) · [Open the population dashboard](docs/demo/pool_dashboard.html) · [Open the four-bet dashboard](docs/demo/fourbet_dashboard.html) · [Read the methodology](docs/METHODOLOGY.md)
 
-## Recruiter preview — no setup required
+## Preview — no setup required
 
 On Windows, extract the repository and double-click **`START.bat`**. It opens the complete case study and its aggregate dashboards in the default browser. Python, a terminal and access to private hand histories are not required for the portfolio preview.
 
