@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="An auditable CoinPoker PLO population analytics pipeline: reconstruct decision nodes, quantify responses and preserve the path back to source actions.">
+  <meta property="og:title" content="CoinPoker PLO Population Analyzer">
+  <meta property="og:description" content="From CoinPoker hand histories to reviewable, audit-aware population tendencies.">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="CoinPoker PLO Population Analyzer">
+  <meta name="twitter:description" content="From CoinPoker hand histories to reviewable, audit-aware population tendencies.">
+  <title>CoinPoker PLO Population Analyzer — Case Study</title>
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav wrap" aria-label="Primary navigation">
+      <a class="brand" href="#top"><span class="brand-mark" aria-hidden="true">C</span><span>CoinPoker PLO Population Analyzer</span></a>
+      <div class="nav-links">
+        <a href="#method">Method</a>
+        <a href="#findings">Snapshot</a>
+        <a href="#scope">Scope</a>
+        <a class="button" href="demo/pool_dashboard.html">Open dashboard <span aria-hidden="true">↗</span></a>
+      </div>
+    </nav>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="wrap">
+        <div class="eyebrow">Poker data engineering · population research</div>
+        <h1>Turn hand histories into evidence you can inspect.</h1>
+        <p class="hero-copy">A deterministic CoinPoker PLO analytics pipeline that reconstructs betting context, measures decision-node response ranges and keeps the path from a headline metric back to the source action sequence.</p>
+        <div class="actions">
+          <a class="button primary" href="demo/pool_dashboard.html">Explore the aggregate dashboard</a>
+          <a class="button" href="METHODOLOGY.md">Read the methodology</a>
+        </div>
+        <div class="hero-proof" aria-label="Case study dataset summary">
+          <div class="metric"><strong>38,248</strong><span>raw hands read</span></div>
+          <div class="metric"><strong>27,701</strong><span>non-straddled PLO4 hands</span></div>
+          <div class="metric"><strong>19,527</strong><span>decision-node records</span></div>
+          <div class="metric"><strong>0</strong><span>parse errors in snapshot</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="method">
+      <div class="wrap">
+        <div class="section-head">
+          <h2>Context first.<br>Counts second.</h2>
+          <p>The pipeline does not treat every bet or fold as equivalent. It recreates the strategic state around the action, then emits an observation only when a precisely defined node is reached.</p>
+        </div>
+        <div class="pipeline">
+          <article class="step"><div class="step-number">01 / PARSE</div><h3>Reconstruct the hand</h3><p>Seats, button, stacks, positions, streets, boards, ordered actions and pot-relative sizes.</p></article>
+          <article class="step"><div class="step-number">02 / MODEL</div><h3>Identify the node</h3><p>Missed c-bets, delayed c-bets, probes, barrels, check-raises and the response each creates.</p></article>
+          <article class="step"><div class="step-number">03 / REVIEW</div><h3>Aggregate with guardrails</h3><p>Segment by stake and context, expose sample size, compare with versioned review bands and retain an audit trail.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="findings">
+      <div class="wrap">
+        <div class="section-head">
+          <h2>A useful flag starts a review.</h2>
+          <p>These examples show how the dashboard prioritizes observations. They describe one dataset and one benchmark configuration; they are not solver outputs or automatic strategy changes.</p>
+        </div>
+        <div class="findings">
+          <article class="finding featured">
+            <div>
+              <div class="finding-label">PL50 · single-raised pot</div>
+              <div class="big-number">40.7%</div>
+              <div class="benchmark">IP stab after missed flop c-bet · n=847 · review band 45–70%</div>
+            </div>
+            <p>A large sample sits below the configured band. The next step is to inspect texture, sizing and response splits—not to promote the label directly into a strategic rule.</p>
+          </article>
+          <div class="finding-stack">
+            <article class="finding">
+              <div class="finding-label">PL50 · three-bet pot</div>
+              <div class="mini-value flag">62.4%</div>
+              <div class="benchmark">fold vs delayed c-bet · n=101</div>
+            </article>
+            <article class="finding">
+              <div class="finding-label">Known/shown four-bet sample</div>
+              <div class="mini-value">58.9% AAxx</div>
+              <p>172 of 292 revealed hands across 468 qualifying non-straddled events. The reveal rate stays visible because the estimate is conditional.</p>
+            </article>
+          </div>
+        </div>
+        <article class="finding" style="margin-top:16px">
+          <div class="finding-label">Definition audit · fold to flop c-bet</div>
+          <h3>Observed, tested, not yet interpretable.</h3>
+          <p>The analyzer reports 44.6% in PL50 single-raised pots and 43.2% in three-bet pots, materially above the comparison HUD range. A 100-hand stratified source review found no classification error, while straddles, position, table size and all-in c-bets did not resolve the gap. This node is marked <code>audit_required</code> and removed from exploit ranking until denominator equivalence is established.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="scope" class="boundary">
+      <div class="wrap">
+        <div class="section-head">
+          <h2>Clear analytical boundaries.</h2>
+          <p>Credible analysis says what the data supports and just as clearly what it does not.</p>
+        </div>
+        <div class="boundary-grid">
+          <article class="boundary-card">
+            <h3>This project is</h3>
+            <ul>
+              <li>population-level descriptive analytics;</li>
+              <li>a reproducible parser and feature-extraction pipeline;</li>
+              <li>a review workflow with sample-size and privacy guardrails;</li>
+              <li>a local decision-support tool for poker study.</li>
+            </ul>
+          </article>
+          <article class="boundary-card not">
+            <h3>This project is not</h3>
+            <ul>
+              <li>a multi-account, RTA, bot or collusion detector;</li>
+              <li>a player-profiling system;</li>
+              <li>a solver or causal model;</li>
+              <li>evidence that any account violated a rule.</li>
+            </ul>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="cta">
+      <div class="wrap">
+        <div class="cta-box">
+          <h2>See the analysis, not just the pitch.</h2>
+          <p>The committed demo contains aggregate statistics only. Real hand histories and granular audit files stay outside version control.</p>
+          <div class="actions">
+            <a class="button primary" href="demo/pool_dashboard.html">Open dashboard</a>
+            <a class="button" href="demo/fourbet_dashboard.html">Open four-bet view</a>
+            <a class="button" href="DATA_PRIVACY.md">Data handling notes</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap footer-row"><span>CoinPoker PLO Population Analyzer</span><span>Analytics and decision support · not account detection</span></div>
+  </footer>
+</body>
+</html>

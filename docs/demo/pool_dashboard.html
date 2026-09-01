@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang='en'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'><title>CoinPoker PLO Population Analyzer — Review Dashboard</title>
+<style>
+:root { color-scheme:dark; --bg:#07100d; --panel:#0d1915; --panel2:#12221c; --text:#eef5ef; --muted:#9facaa; --border:#22352e; --green:#55d698; --amber:#efb85c; --red:#f27c6f; }
+* { box-sizing:border-box; }
+body { margin:0; font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif; background:radial-gradient(circle at 85% 0%,rgba(52,145,98,.13),transparent 30rem),var(--bg); color:var(--text); line-height:1.5; }
+main { max-width:1320px; margin:0 auto; padding:clamp(20px,4vw,52px); }
+.eyebrow { color:var(--green); font-size:12px; font-weight:800; letter-spacing:.13em; text-transform:uppercase; }
+h1 { margin:12px 0 8px; max-width:800px; font-size:clamp(38px,6vw,68px); line-height:1; letter-spacing:-.055em; }
+h2 { margin:52px 0 18px; font-size:clamp(24px,3vw,34px); letter-spacing:-.035em; }
+.subtitle { max-width:760px; color:var(--muted); margin:0 0 30px; font-size:17px; }
+.cards { display:grid; grid-template-columns:repeat(6,1fr); gap:1px; margin:34px 0 12px; overflow:hidden; border:1px solid var(--border); border-radius:16px; background:var(--border); }
+.card { background:rgba(13,25,21,.97); padding:20px; }
+.card .label { color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:.09em; }
+.card .value { font-size:24px; font-weight:760; letter-spacing:-.035em; margin-top:7px; }
+.grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; align-items:start; }
+figure { background:linear-gradient(145deg,var(--panel2),var(--panel)); border:1px solid var(--border); border-radius:16px; padding:12px; margin:0; }
+figcaption { color:var(--muted); font-size:12px; margin:9px 4px 3px; }
+img { max-width:100%; height:auto; display:block; border-radius:10px; background:#fff; }
+.table-wrap { width:100%; overflow:auto; border:1px solid var(--border); border-radius:14px; }
+table { border-collapse:collapse; width:100%; min-width:900px; font-size:12px; background:var(--panel); }
+th,td { border-bottom:1px solid var(--border); padding:9px 11px; vertical-align:top; }
+th { text-align:left; color:#dce8e1; background:#162820; position:sticky; top:0; white-space:nowrap; }
+tr:last-child td { border-bottom:0; } tr:hover td { background:#10221b; }
+tr.low td, tr.high td { font-weight:640; } tr.low td:first-child, tr.high td:first-child { border-left:3px solid var(--amber); }
+tr.audit_required td:first-child { border-left:3px solid var(--red); }
+.method { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:18px; }
+.note { margin:0; padding:20px; color:var(--muted); border:1px solid var(--border); border-radius:14px; background:var(--panel); }
+.note strong { color:var(--text); } .empty { color:var(--muted); }
+.code { font-family:ui-monospace,Consolas,monospace; }
+a { color:var(--green); }
+@media(max-width:1000px) { .cards { grid-template-columns:repeat(3,1fr); } }
+@media(max-width:760px) { .grid,.method { grid-template-columns:1fr; } .cards { grid-template-columns:repeat(2,1fr); } }
+@media(max-width:460px) { .cards { grid-template-columns:1fr; } }
+</style></head><body><main>
+<div class='eyebrow'>Aggregate review dashboard</div>
+<h1>CoinPoker PLO Population Analyzer</h1>
+<p class='subtitle'>Privacy-conscious analysis of anonymized hand histories. Frequencies are grouped at population level; no per-player profiles are created.</p>
+<section class='cards'>
+<div class='card'><div class='label'>Hands analyzed</div><div class='value'>27,701</div></div><div class='card'><div class='label'>Decision nodes</div><div class='value'>19,527</div></div><div class='card'><div class='label'>Stake filter</div><div class='value'>all</div></div><div class='card'><div class='label'>Parse errors</div><div class='value'>0</div></div><div class='card'><div class='label'>Hero included</div><div class='value'>no</div></div><div class='card'><div class='label'>Game</div><div class='value'>PLO4</div></div>
+</section>
+<h2>Priority review candidates</h2>
+<div class='table-wrap'><table>
+<thead><tr><th>spot_id</th><th>pot_type</th><th>opportunities</th><th>benchmark_metric</th><th>deviation_pp</th><th>exploit_score</th><th>confidence</th><th>benchmark_flag</th><th>leak_note</th></tr></thead>
+<tbody>
+<tr class='low'><td>BET_IP_VS_MISSED_FLOP_CB</td><td>srp</td><td>847</td><td>bet_pct</td><td>-4.3</td><td>4.3</td><td>HIGH</td><td>LOW</td><td>pool under-stabs vs missed flop c-bet; check response stats before pure-bluffing more</td></tr>
+<tr class='low'><td>BET_IP_VS_MISSED_FLOP_CB</td><td>srp</td><td>447</td><td>bet_pct</td><td>-7.9</td><td>7.9</td><td>HIGH</td><td>LOW</td><td>pool under-stabs vs missed flop c-bet; check response stats before pure-bluffing more</td></tr>
+<tr class='low'><td>BET_IP_VS_MISSED_FLOP_CB</td><td>3bet</td><td>354</td><td>bet_pct</td><td>-6.0</td><td>6.0</td><td>HIGH</td><td>LOW</td><td>pool under-stabs vs missed flop c-bet; check response stats before pure-bluffing more</td></tr>
+<tr class='low'><td>BET_IP_VS_MISSED_FLOP_CB</td><td>srp</td><td>184</td><td>bet_pct</td><td>-7.5</td><td>5.25</td><td>MEDIUM</td><td>LOW</td><td>pool under-stabs vs missed flop c-bet; check response stats before pure-bluffing more</td></tr>
+<tr class='low'><td>BET_IP_VS_MISSED_TURN_CB</td><td>srp</td><td>162</td><td>bet_pct</td><td>-6.7</td><td>4.69</td><td>MEDIUM</td><td>LOW</td><td>pool under-stabs vs missed turn c-bet after calling flop</td></tr>
+<tr class='low'><td>BET_IP_VS_MISSED_FLOP_CB</td><td>3bet</td><td>146</td><td>bet_pct</td><td>-13.5</td><td>9.45</td><td>MEDIUM</td><td>LOW</td><td>pool under-stabs vs missed flop c-bet; check response stats before pure-bluffing more</td></tr>
+<tr class='high'><td>FOLD_TO_DELAYED_CBET_IP</td><td>3bet</td><td>101</td><td>fold_pct</td><td>2.4</td><td>1.68</td><td>MEDIUM</td><td>HIGH</td><td>IP overfolds vs delayed c-bet; OOP delayed c-bets can bluff more</td></tr>
+<tr class='low'><td>BET_IP_VS_MISSED_TURN_CB</td><td>srp</td><td>97</td><td>bet_pct</td><td>-4.8</td><td>1.92</td><td>LOW</td><td>LOW</td><td>pool under-stabs vs missed turn c-bet after calling flop</td></tr>
+<tr class='low'><td>FOLD_TO_FLOP_CHECK_RAISE</td><td>3bet</td><td>90</td><td>fold_pct</td><td>-1.1</td><td>0.44</td><td>LOW</td><td>LOW</td><td>bettors do not fold enough vs flop check-raise; x/r should be value/equity-heavy</td></tr>
+<tr class='high'><td>FOLD_TO_DELAYED_CBET_OOP</td><td>srp</td><td>67</td><td>fold_pct</td><td>1.2</td><td>0.48</td><td>LOW</td><td>HIGH</td><td>OOP overfolds vs delayed c-bet; IP delayed c-bets can bluff more</td></tr>
+<tr class='low'><td>BET_IP_VS_MISSED_FLOP_CB</td><td>3bet</td><td>63</td><td>bet_pct</td><td>-14.8</td><td>5.92</td><td>LOW</td><td>LOW</td><td>pool under-stabs vs missed flop c-bet; check response stats before pure-bluffing more</td></tr>
+<tr class='high'><td>FOLD_TO_DELAYED_CBET_OOP</td><td>3bet</td><td>57</td><td>fold_pct</td><td>1.4</td><td>0.56</td><td>LOW</td><td>HIGH</td><td>OOP overfolds vs delayed c-bet; IP delayed c-bets can bluff more</td></tr>
+</tbody></table></div>
+<h2>Pattern overview</h2>
+<div class='grid'><figure><img src='charts/key_leaks.png' alt='key leaks'><figcaption>Key Leaks</figcaption></figure>
+<figure><img src='charts/spot_pottype_heatmap.png' alt='spot pottype heatmap'><figcaption>Spot Pottype Heatmap</figcaption></figure>
+<figure><img src='charts/response_mix.png' alt='response mix'><figcaption>Response Mix</figcaption></figure>
+<figure><img src='charts/board_texture_oop_response_vs_ip_flop_stab_after_missed_cb.png' alt='board texture oop response vs ip flop stab after missed cb'><figcaption>Board Texture Oop Response Vs Ip Flop Stab After Missed Cb</figcaption></figure></div>
+<h2>All decision nodes</h2>
+<div class='table-wrap'><table>
+<thead><tr><th>spot_id</th><th>pot_type</th><th>opportunities</th><th>bet_pct</th><th>check_pct</th><th>fold_pct</th><th>call_pct</th><th>raise_pct</th><th>avg_size_pct</th><th>benchmark_flag</th><th>confidence</th><th>exploit_score</th></tr></thead>
+<tbody>
+<tr class='low'><td>BET_IP_VS_MISSED_FLOP_CB</td><td>3bet</td><td>63</td><td>30.2</td><td>69.8</td><td>0.0</td><td>0.0</td><td>0.0</td><td>55.1</td><td>LOW</td><td>LOW</td><td>5.92</td></tr>
+<tr class='low_sample'><td>BET_IP_VS_MISSED_FLOP_CB</td><td>4bet+</td><td>1</td><td>0.0</td><td>100.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td></td><td>low_sample</td><td>IGNORE</td><td>4.5</td></tr>
+<tr class='low'><td>BET_IP_VS_MISSED_FLOP_CB</td><td>srp</td><td>184</td><td>37.5</td><td>62.5</td><td>0.0</td><td>0.0</td><td>0.0</td><td>58.7</td><td>LOW</td><td>MEDIUM</td><td>5.25</td></tr>
+<tr class='low'><td>BET_IP_VS_MISSED_FLOP_CB</td><td>3bet</td><td>146</td><td>31.5</td><td>68.5</td><td>0.0</td><td>0.0</td><td>0.0</td><td>68.7</td><td>LOW</td><td>MEDIUM</td><td>9.45</td></tr>
+<tr class='low_sample'><td>BET_IP_VS_MISSED_FLOP_CB</td><td>4bet+</td><td>10</td><td>60.0</td><td>40.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>62.6</td><td>low_sample</td><td>IGNORE</td><td>0.0</td></tr>
+<tr class='low'><td>BET_IP_VS_MISSED_FLOP_CB</td><td>srp</td><td>447</td><td>37.1</td><td>62.9</td><td>0.0</td><td>0.0</td><td>0.0</td><td>63.5</td><td>LOW</td><td>HIGH</td><td>7.9</td></tr>
+<tr class='low'><td>BET_IP_VS_MISSED_FLOP_CB</td><td>3bet</td><td>354</td><td>39.0</td><td>61.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>57.8</td><td>LOW</td><td>HIGH</td><td>6.0</td></tr>
+<tr class='low_sample'><td>BET_IP_VS_MISSED_FLOP_CB</td><td>4bet+</td><td>22</td><td>45.5</td><td>54.5</td><td>0.0</td><td>0.0</td><td>0.0</td><td>72.9</td><td>low_sample</td><td>IGNORE</td><td>0.0</td></tr>
+<tr class='low'><td>BET_IP_VS_MISSED_FLOP_CB</td><td>srp</td><td>847</td><td>40.7</td><td>59.3</td><td>0.0</td><td>0.0</td><td>0.0</td><td>62.5</td><td>LOW</td><td>HIGH</td><td>4.3</td></tr>
+<tr class='low_sample'><td>BET_IP_VS_MISSED_TURN_CB</td><td>3bet</td><td>12</td><td>33.3</td><td>66.7</td><td>0.0</td><td>0.0</td><td>0.0</td><td>44.8</td><td>low_sample</td><td>IGNORE</td><td>1.17</td></tr>
+<tr class='ok'><td>BET_IP_VS_MISSED_TURN_CB</td><td>srp</td><td>33</td><td>48.5</td><td>51.5</td><td>0.0</td><td>0.0</td><td>0.0</td><td>63.7</td><td>OK</td><td>LOW</td><td>0.0</td></tr>
+<tr class='low_sample'><td>BET_IP_VS_MISSED_TURN_CB</td><td>3bet</td><td>17</td><td>35.3</td><td>64.7</td><td>0.0</td><td>0.0</td><td>0.0</td><td>73.1</td><td>low_sample</td><td>IGNORE</td><td>0.97</td></tr>
+<tr class='low_sample'><td>BET_IP_VS_MISSED_TURN_CB</td><td>4bet+</td><td>3</td><td>33.3</td><td>66.7</td><td>0.0</td><td>0.0</td><td>0.0</td><td>59.5</td><td>low_sample</td><td>IGNORE</td><td>1.17</td></tr>
+<tr class='low'><td>BET_IP_VS_MISSED_TURN_CB</td><td>srp</td><td>97</td><td>40.2</td><td>59.8</td><td>0.0</td><td>0.0</td><td>0.0</td><td>62.3</td><td>LOW</td><td>LOW</td><td>1.92</td></tr>
+<tr class='ok'><td>BET_IP_VS_MISSED_TURN_CB</td><td>3bet</td><td>74</td><td>50.0</td><td>50.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>58.3</td><td>OK</td><td>LOW</td><td>0.0</td></tr>
+<tr class='low_sample'><td>BET_IP_VS_MISSED_TURN_CB</td><td>4bet+</td><td>2</td><td>50.0</td><td>50.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>100.0</td><td>low_sample</td><td>IGNORE</td><td>0.0</td></tr>
+<tr class='low'><td>BET_IP_VS_MISSED_TURN_CB</td><td>srp</td><td>162</td><td>38.3</td><td>61.7</td><td>0.0</td><td>0.0</td><td>0.0</td><td>61.0</td><td>LOW</td><td>MEDIUM</td><td>4.69</td></tr>
+<tr class='low'><td>DELAYED_CBET_IP</td><td>3bet</td><td>31</td><td>29.0</td><td>71.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>60.4</td><td>LOW</td><td>LOW</td><td>2.4</td></tr>
+<tr class='low_sample'><td>DELAYED_CBET_IP</td><td>4bet+</td><td>1</td><td>0.0</td><td>100.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td></td><td>low_sample</td><td>IGNORE</td><td>3.5</td></tr>
+<tr class='ok'><td>DELAYED_CBET_IP</td><td>srp</td><td>142</td><td>45.1</td><td>54.9</td><td>0.0</td><td>0.0</td><td>0.0</td><td>59.4</td><td>OK</td><td>MEDIUM</td><td>0.0</td></tr>
+<tr class='ok'><td>DELAYED_CBET_IP</td><td>3bet</td><td>60</td><td>45.0</td><td>55.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>54.8</td><td>OK</td><td>LOW</td><td>0.0</td></tr>
+<tr class='low_sample'><td>DELAYED_CBET_IP</td><td>4bet+</td><td>2</td><td>0.0</td><td>100.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td></td><td>low_sample</td><td>IGNORE</td><td>3.5</td></tr>
+<tr class='ok'><td>DELAYED_CBET_IP</td><td>srp</td><td>355</td><td>36.9</td><td>63.1</td><td>0.0</td><td>0.0</td><td>0.0</td><td>62.7</td><td>OK</td><td>HIGH</td><td>0.0</td></tr>
+<tr class='ok'><td>DELAYED_CBET_IP</td><td>3bet</td><td>121</td><td>44.6</td><td>55.4</td><td>0.0</td><td>0.0</td><td>0.0</td><td>60.5</td><td>OK</td><td>MEDIUM</td><td>0.0</td></tr>
+<tr class='low_sample'><td>DELAYED_CBET_IP</td><td>4bet+</td><td>7</td><td>57.1</td><td>42.9</td><td>0.0</td><td>0.0</td><td>0.0</td><td>61.7</td><td>low_sample</td><td>IGNORE</td><td>0.0</td></tr>
+<tr class='ok'><td>DELAYED_CBET_IP</td><td>srp</td><td>632</td><td>42.2</td><td>57.8</td><td>0.0</td><td>0.0</td><td>0.0</td><td>60.7</td><td>OK</td><td>HIGH</td><td>0.0</td></tr>
+<tr class='ok'><td>DELAYED_CBET_OOP</td><td>3bet</td><td>39</td><td>46.2</td><td>53.8</td><td>0.0</td><td>0.0</td><td>0.0</td><td>70.4</td><td>OK</td><td>LOW</td><td>0.0</td></tr>
+<tr class='low_sample'><td>DELAYED_CBET_OOP</td><td>4bet+</td><td>1</td><td>0.0</td><td>100.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td></td><td>low_sample</td><td>IGNORE</td><td>3.5</td></tr>
+<tr class='ok'><td>DELAYED_CBET_OOP</td><td>srp</td><td>112</td><td>42.0</td><td>58.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>58.9</td><td>OK</td><td>MEDIUM</td><td>0.0</td></tr>
+<tr class='ok'><td>DELAYED_CBET_OOP</td><td>3bet</td><td>89</td><td>44.9</td><td>55.1</td><td>0.0</td><td>0.0</td><td>0.0</td><td>55.9</td><td>OK</td><td>LOW</td><td>0.0</td></tr>
+<tr class='ok'><td>DELAYED_CBET_OOP</td><td>srp</td><td>266</td><td>36.8</td><td>62.8</td><td>0.4</td><td>0.0</td><td>0.0</td><td>64.5</td><td>OK</td><td>MEDIUM</td><td>0.0</td></tr>
+<tr class='ok'><td>DELAYED_CBET_OOP</td><td>3bet</td><td>188</td><td>52.1</td><td>47.9</td><td>0.0</td><td>0.0</td><td>0.0</td><td>60.7</td><td>OK</td><td>MEDIUM</td><td>0.0</td></tr>
+<tr class='low_sample'><td>DELAYED_CBET_OOP</td><td>4bet+</td><td>7</td><td>57.1</td><td>42.9</td><td>0.0</td><td>0.0</td><td>0.0</td><td>58.9</td><td>low_sample</td><td>IGNORE</td><td>0.0</td></tr>
+<tr class='ok'><td>DELAYED_CBET_OOP</td><td>srp</td><td>501</td><td>40.9</td><td>59.1</td><td>0.0</td><td>0.0</td><td>0.0</td><td>65.2</td><td>OK</td><td>HIGH</td><td>0.0</td></tr>
+<tr class='low_sample'><td>FOLD_TO_DELAYED_CBET_IP</td><td>3bet</td><td>19</td><td>0.0</td><td>0.0</td><td>42.1</td><td>47.4</td><td>10.5</td><td>58.0</td><td>low_sample</td><td>IGNORE</td><td>0.0</td></tr>
+<tr class='ok'><td>FOLD_TO_DELAYED_CBET_IP</td><td>srp</td><td>47</td><td>0.0</td><td>0.0</td><td>44.7</td><td>42.6</td><td>12.8</td><td>59.6</td><td>OK</td><td>LOW</td><td>0.0</td></tr>
+<tr class='ok'><td>FOLD_TO_DELAYED_CBET_IP</td><td>3bet</td><td>45</td><td>0.0</td><td>0.0</td><td>48.9</td><td>46.7</td><td>4.4</td><td>42.0</td><td>OK</td><td>LOW</td><td>0.0</td></tr>
+<tr class='low_sample'><td>FOLD_TO_DELAYED_CBET_IP</td><td>4bet+</td><td>1</td><td>0.0</td><td>0.0</td><td>100.0</td><td>0.0</td><td>0.0</td><td></td><td>low_sample</td><td>IGNORE</td><td>4.0</td></tr>
+<tr class='ok'><td>FOLD_TO_DELAYED_CBET_IP</td><td>srp</td><td>108</td><td>0.0</td><td>0.0</td><td>46.3</td><td>48.1</td><td>5.6</td><td>50.2</td><td>OK</td><td>MEDIUM</td><td>0.0</td></tr>
+<tr class='high'><td>FOLD_TO_DELAYED_CBET_IP</td><td>3bet</td><td>101</td><td>0.0</td><td>0.0</td><td>62.4</td><td>33.7</td><td>4.0</td><td>41.1</td><td>HIGH</td><td>MEDIUM</td><td>1.68</td></tr>
+<tr class='low_sample'><td>FOLD_TO_DELAYED_CBET_IP</td><td>4bet+</td><td>7</td><td>0.0</td><td>0.0</td><td>85.7</td><td>14.3</td><td>0.0</td><td>30.4</td><td>low_sample</td><td>IGNORE</td><td>2.57</td></tr>
+<tr class='ok'><td>FOLD_TO_DELAYED_CBET_IP</td><td>srp</td><td>192</td><td>0.0</td><td>0.0</td><td>49.0</td><td>45.8</td><td>5.2</td><td>50.2</td><td>OK</td><td>MEDIUM</td><td>0.0</td></tr>
+<tr class='low_sample'><td>FOLD_TO_DELAYED_CBET_OOP</td><td>3bet</td><td>13</td><td>0.0</td><td>0.0</td><td>76.9</td><td>23.1</td><td>0.0</td><td>32.6</td><td>low_sample</td><td>IGNORE</td><td>1.69</td></tr>
+<tr class='high'><td>FOLD_TO_DELAYED_CBET_OOP</td><td>srp</td><td>67</td><td>0.0</td><td>0.0</td><td>61.2</td><td>31.3</td><td>7.5</td><td>50.1</td><td>HIGH</td><td>LOW</td><td>0.48</td></tr>
+<tr class='low_sample'><td>FOLD_TO_DELAYED_CBET_OOP</td><td>3bet</td><td>26</td><td>0.0</td><td>0.0</td><td>50.0</td><td>38.5</td><td>11.5</td><td>53.5</td><td>low_sample</td><td>IGNORE</td><td>0.0</td></tr>
+<tr class='ok'><td>FOLD_TO_DELAYED_CBET_OOP</td><td>srp</td><td>146</td><td>0.0</td><td>0.0</td><td>56.8</td><td>39.0</td><td>4.1</td><td>47.1</td><td>OK</td><td>MEDIUM</td><td>0.0</td></tr>
+<tr class='high'><td>FOLD_TO_DELAYED_CBET_OOP</td><td>3bet</td><td>57</td><td>0.0</td><td>0.0</td><td>61.4</td><td>31.6</td><td>7.0</td><td>52.7</td><td>HIGH</td><td>LOW</td><td>0.56</td></tr>
+<tr class='low_sample'><td>FOLD_TO_DELAYED_CBET_OOP</td><td>4bet+</td><td>4</td><td>0.0</td><td>0.0</td><td>50.0</td><td>25.0</td><td>25.0</td><td>51.1</td><td>low_sample</td><td>IGNORE</td><td>0.0</td></tr>
+<tr class='ok'><td>FOLD_TO_DELAYED_CBET_OOP</td><td>srp</td><td>297</td><td>0.0</td><td>0.0</td><td>53.5</td><td>40.7</td><td>5.7</td><td>49.2</td><td>OK</td><td>MEDIUM</td><td>0.0</td></tr>
+<tr class='audit_required'><td>FOLD_TO_FLOP_CBET</td><td>3bet</td><td>169</td><td>0.0</td><td>0.0</td><td>47.9</td><td>33.1</td><td>18.9</td><td>73.9</td><td>audit_required</td><td>MEDIUM</td><td>0.0</td></tr>
+<tr class='audit_required'><td>FOLD_TO_FLOP_CBET</td><td>4bet+</td><td>27</td><td>0.0</td><td>0.0</td><td>51.9</td><td>37.0</td><td>11.1</td><td>45.5</td><td>audit_required</td><td>IGNORE</td><td>0.0</td></tr>
+<tr class='audit_required'><td>FOLD_TO_FLOP_CBET</td><td>srp</td><td>446</td><td>0.0</td><td>0.0</td><td>40.6</td><td>51.1</td><td>8.3</td><td>50.2</td><td>audit_required</td><td>HIGH</td><td>0.0</td></tr>
+<tr class='audit_required'><td>FOLD_TO_FLOP_CBET</td><td>3bet</td><td>343</td><td>0.0</td><td>0.0</td><td>55.4</td><td>28.6</td><td>16.0</td><td>72.3</td><td>audit_required</td><td>HIGH</td><td>0.0</td></tr>
+<tr class='audit_required'><td>FOLD_TO_FLOP_CBET</td><td>4bet+</td><td>50</td><td>0.0</td><td>0.0</td><td>44.0</td><td>42.0</td><td>14.0</td><td>47.0</td><td>audit_required</td><td>LOW</td><td>0.0</td></tr>
+<tr class='audit_required'><td>FOLD_TO_FLOP_CBET</td><td>srp</td><td>1047</td><td>0.0</td><td>0.0</td><td>45.4</td><td>47.1</td><td>7.5</td><td>51.9</td><td>audit_required</td><td>HIGH</td><td>0.0</td></tr>
+<tr class='audit_required'><td>FOLD_TO_FLOP_CBET</td><td>3bet</td><td>837</td><td>0.0</td><td>0.0</td><td>43.2</td><td>36.8</td><td>20.0</td><td>67.3</td><td>audit_required</td><td>HIGH</td><td>0.0</td></tr>
+<tr class='audit_required'><td>FOLD_TO_FLOP_CBET</td><td>4bet+</td><td>127</td><td>0.0</td><td>0.0</td><td>40.2</td><td>45.7</td><td>14.2</td><td>50.5</td><td>audit_required</td><td>MEDIUM</td><td>0.0</td></tr>
+<tr class='audit_required'><td>FOLD_TO_FLOP_CBET</td><td>srp</td><td>2102</td><td>0.0</td><td>0.0</td><td>44.6</td><td>45.6</td><td>9.8</td><td>53.9</td><td>audit_required</td><td>HIGH</td><td>0.0</td></tr>
+<tr class='low_sample'><td>FOLD_TO_FLOP_CHECK_RAISE</td><td>3bet</td><td>14</td><td>0.0</td><td>0.0</td><td>14.3</td><td>57.1</td><td>28.6</td><td>41.8</td><td>low_sample</td><td>IGNORE</td><td>1.57</td></tr>
+<tr class='low_sample'><td>FOLD_TO_FLOP_CHECK_RAISE</td><td>4bet+</td><td>3</td><td>0.0</td><td>0.0</td><td>0.0</td><td>100.0</td><td>0.0</td><td>4.3</td><td>low_sample</td><td>IGNORE</td><td>3.0</td></tr>
+<tr class='ok'><td>FOLD_TO_FLOP_CHECK_RAISE</td><td>srp</td><td>33</td><td>0.0</td><td>0.0</td><td>39.4</td><td>54.5</td><td>6.1</td><td>54.3</td><td>OK</td><td>LOW</td><td>0.0</td></tr>
+<tr class='low'><td>FOLD_TO_FLOP_CHECK_RAISE</td><td>3bet</td><td>31</td><td>0.0</td><td>0.0</td><td>29.0</td><td>45.2</td><td>25.8</td><td>52.2</td><td>LOW</td><td>LOW</td><td>0.4</td></tr>
+<tr class='low_sample'><td>FOLD_TO_FLOP_CHECK_RAISE</td><td>4bet+</td><td>5</td><td>0.0</td><td>0.0</td><td>20.0</td><td>60.0</td><td>20.0</td><td>21.3</td><td>low_sample</td><td>IGNORE</td><td>1.0</td></tr>
+<tr class='low_sample'><td>FOLD_TO_FLOP_CHECK_RAISE</td><td>limped</td><td>2</td><td>0.0</td><td>0.0</td><td>50.0</td><td>50.0</td><td>0.0</td><td>20.0</td><td>low_sample</td><td>IGNORE</td><td>0.0</td></tr>
+<tr class='ok'><td>FOLD_TO_FLOP_CHECK_RAISE</td><td>srp</td><td>59</td><td>0.0</td><td>0.0</td><td>44.1</td><td>37.3</td><td>18.6</td><td>83.1</td><td>OK</td><td>LOW</td><td>0.0</td></tr>
+<tr class='low'><td>FOLD_TO_FLOP_CHECK_RAISE</td><td>3bet</td><td>90</td><td>0.0</td><td>0.0</td><td>28.9</td><td>41.1</td><td>30.0</td><td>59.1</td><td>LOW</td><td>LOW</td><td>0.44</td></tr>
+<tr class='low_sample'><td>FOLD_TO_FLOP_CHECK_RAISE</td><td>4bet+</td><td>5</td><td>0.0</td><td>0.0</td><td>20.0</td><td>80.0</td><td>0.0</td><td>4.9</td><td>low_sample</td><td>IGNORE</td><td>1.0</td></tr>
+<tr class='low_sample'><td>FOLD_TO_FLOP_CHECK_RAISE</td><td>limped</td><td>4</td><td>0.0</td><td>0.0</td><td>25.0</td><td>75.0</td><td>0.0</td><td>47.1</td><td>low_sample</td><td>IGNORE</td><td>0.5</td></tr>
+<tr class='ok'><td>FOLD_TO_FLOP_CHECK_RAISE</td><td>srp</td><td>148</td><td>0.0</td><td>0.0</td><td>44.6</td><td>43.9</td><td>11.5</td><td>62.9</td><td>OK</td><td>MEDIUM</td><td>0.0</td></tr>
+<tr class='low_sample'><td>FOLD_TO_RIVER_BARREL_AFTER_FLOP_TURN_CALL</td><td>3bet</td><td>1</td><td>0.0</td><td>0.0</td><td>100.0</td><td>0.0</td><td>0.0</td><td></td><td>low_sample</td><td>IGNORE</td><td>3.5</td></tr>
+<tr class='low_sample'><td>FOLD_TO_RIVER_BARREL_AFTER_FLOP_TURN_CALL</td><td>srp</td><td>25</td><td>0.0</td><td>0.0</td><td>48.0</td><td>44.0</td><td>8.0</td><td>55.4</td><td>low_sample</td><td>IGNORE</td><td>0.0</td></tr>
+<tr class='low_sample'><td>FOLD_TO_RIVER_BARREL_AFTER_FLOP_TURN_CALL</td><td>3bet</td><td>13</td><td>0.0</td><td>0.0</td><td>53.8</td><td>38.5</td><td>7.7</td><td>49.5</td><td>low_sample</td><td>IGNORE</td><td>0.0</td></tr>
+<tr class='low_sample'><td>FOLD_TO_RIVER_BARREL_AFTER_FLOP_TURN_CALL</td><td>4bet+</td><td>1</td><td>0.0</td><td>0.0</td><td>100.0</td><td>0.0</td><td>0.0</td><td></td><td>low_sample</td><td>IGNORE</td><td>3.5</td></tr>
+<tr class='ok'><td>FOLD_TO_RIVER_BARREL_AFTER_FLOP_TURN_CALL</td><td>srp</td><td>42</td><td>0.0</td><td>0.0</td><td>54.8</td><td>42.9</td><td>2.4</td><td>42.0</td><td>OK</td><td>LOW</td><td>0.0</td></tr>
+<tr class='low_sample'><td>FOLD_TO_RIVER_BARREL_AFTER_FLOP_TURN_CALL</td><td>3bet</td><td>21</td><td>0.0</td><td>0.0</td><td>47.6</td><td>52.4</td><td>0.0</td><td>27.1</td><td>low_sample</td><td>IGNORE</td><td>0.0</td></tr>
+<tr class='ok'><td>FOLD_TO_RIVER_BARREL_AFTER_FLOP_TURN_CALL</td><td>srp</td><td>92</td><td>0.0</td><td>0.0</td><td>46.7</td><td>46.7</td><td>6.5</td><td>45.1</td><td>OK</td><td>LOW</td><td>0.0</td></tr>
+<tr class='low_sample'><td>FOLD_TO_TURN_BARREL_AFTER_FLOP_CALL</td><td>3bet</td><td>29</td><td>0.0</td><td>0.0</td><td>44.8</td><td>24.1</td><td>31.0</td><td>79.0</td><td>low_sample</td><td>IGNORE</td><td>0.0</td></tr>
+<tr class='low_sample'><td>FOLD_TO_TURN_BARREL_AFTER_FLOP_CALL</td><td>4bet+</td><td>1</td><td>0.0</td><td>0.0</td><td>100.0</td><td>0.0</td><td>0.0</td><td></td><td>low_sample</td><td>IGNORE</td><td>4.5</td></tr>
+<tr class='ok'><td>FOLD_TO_TURN_BARREL_AFTER_FLOP_CALL</td><td>srp</td><td>102</td><td>0.0</td><td>0.0</td><td>43.1</td><td>47.1</td><td>9.8</td><td>58.2</td><td>OK</td><td>MEDIUM</td><td>0.0</td></tr>
+<tr class='ok'><td>FOLD_TO_TURN_BARREL_AFTER_FLOP_CALL</td><td>3bet</td><td>59</td><td>0.0</td><td>0.0</td><td>37.3</td><td>42.4</td><td>20.3</td><td>52.2</td><td>OK</td><td>LOW</td><td>0.0</td></tr>
+<tr class='low_sample'><td>FOLD_TO_TURN_BARREL_AFTER_FLOP_CALL</td><td>4bet+</td><td>2</td><td>0.0</td><td>0.0</td><td>50.0</td><td>50.0</td><td>0.0</td><td>11.3</td><td>low_sample</td><td>IGNORE</td><td>0.0</td></tr>
+<tr class='ok'><td>FOLD_TO_TURN_BARREL_AFTER_FLOP_CALL</td><td>srp</td><td>233</td><td>0.0</td><td>0.0</td><td>45.1</td><td>44.6</td><td>10.3</td><td>59.8</td><td>OK</td><td>MEDIUM</td><td>0.0</td></tr>
+<tr class='ok'><td>FOLD_TO_TURN_BARREL_AFTER_FLOP_CALL</td><td>3bet</td><td>164</td><td>0.0</td><td>0.0</td><td>50.0</td><td>34.1</td><td>15.9</td><td>54.7</td><td>OK</td><td>MEDIUM</td><td>0.0</td></tr>
+<tr class='low_sample'><td>FOLD_TO_TURN_BARREL_AFTER_FLOP_CALL</td><td>4bet+</td><td>13</td><td>0.0</td><td>0.0</td><td>61.5</td><td>38.5</td><td>0.0</td><td>28.8</td><td>low_sample</td><td>IGNORE</td><td>0.65</td></tr>
+<tr class='ok'><td>FOLD_TO_TURN_BARREL_AFTER_FLOP_CALL</td><td>srp</td><td>443</td><td>0.0</td><td>0.0</td><td>41.3</td><td>49.0</td><td>9.7</td><td>56.5</td><td>OK</td><td>HIGH</td><td>0.0</td></tr>
+<tr class='low_sample'><td>FOLD_TO_TURN_CHECK_RAISE</td><td>3bet</td><td>3</td><td>0.0</td><td>0.0</td><td>0.0</td><td>100.0</td><td>0.0</td><td>37.1</td><td>low_sample</td><td>IGNORE</td><td>4.0</td></tr>
+<tr class='low_sample'><td>FOLD_TO_TURN_CHECK_RAISE</td><td>limped</td><td>1</td><td>0.0</td><td>0.0</td><td>100.0</td><td>0.0</td><td>0.0</td><td></td><td>low_sample</td><td>IGNORE</td><td>3.5</td></tr>
+<tr class='low_sample'><td>FOLD_TO_TURN_CHECK_RAISE</td><td>srp</td><td>21</td><td>0.0</td><td>0.0</td><td>38.1</td><td>47.6</td><td>14.3</td><td>53.0</td><td>low_sample</td><td>IGNORE</td><td>0.19</td></tr>
+<tr class='low_sample'><td>FOLD_TO_TURN_CHECK_RAISE</td><td>3bet</td><td>14</td><td>0.0</td><td>0.0</td><td>42.9</td><td>57.1</td><td>0.0</td><td>24.4</td><td>low_sample</td><td>IGNORE</td><td>0.0</td></tr>
+<tr class='low_sample'><td>FOLD_TO_TURN_CHECK_RAISE</td><td>limped</td><td>6</td><td>0.0</td><td>0.0</td><td>33.3</td><td>66.7</td><td>0.0</td><td>40.6</td><td>low_sample</td><td>IGNORE</td><td>0.67</td></tr>
+<tr class='ok'><td>FOLD_TO_TURN_CHECK_RAISE</td><td>srp</td><td>35</td><td>0.0</td><td>0.0</td><td>45.7</td><td>42.9</td><td>11.4</td><td>41.3</td><td>OK</td><td>LOW</td><td>0.0</td></tr>
+<tr class='low'><td>FOLD_TO_TURN_CHECK_RAISE</td><td>3bet</td><td>30</td><td>0.0</td><td>0.0</td><td>33.3</td><td>60.0</td><td>6.7</td><td>32.9</td><td>LOW</td><td>LOW</td><td>2.68</td></tr>
+<tr class='low_sample'><td>FOLD_TO_TURN_CHECK_RAISE</td><td>4bet+</td><td>1</td><td>0.0</td><td>0.0</td><td>0.0</td><td>100.0</td><td>0.0</td><td>7.8</td><td>low_sample</td><td>IGNORE</td><td>4.0</td></tr>
+<tr class='low_sample'><td>FOLD_TO_TURN_CHECK_RAISE</td><td>limped</td><td>2</td><td>0.0</td><td>0.0</td><td>0.0</td><td>100.0</td><td>0.0</td><td>33.3</td><td>low_sample</td><td>IGNORE</td><td>4.0</td></tr>
+<tr class='ok'><td>FOLD_TO_TURN_CHECK_RAISE</td><td>srp</td><td>82</td><td>0.0</td><td>0.0</td><td>43.9</td><td>43.9</td><td>12.2</td><td>45.4</td><td>OK</td><td>LOW</td><td>0.0</td></tr>
+<tr class='low_sample'><td>FOLD_TO_TURN_PROBE</td><td>3bet</td><td>17</td><td>0.0</td><td>0.0</td><td>41.2</td><td>47.1</td><td>11.8</td><td>62.8</td><td>low_sample</td><td>IGNORE</td><td>0.0</td></tr>
+<tr class='low_sample'><td>FOLD_TO_TURN_PROBE</td><td>4bet+</td><td>2</td><td>0.0</td><td>0.0</td><td>100.0</td><td>0.0</td><td>0.0</td><td></td><td>low_sample</td><td>IGNORE</td><td>5.0</td></tr>
+<tr class='ok'><td>FOLD_TO_TURN_PROBE</td><td>srp</td><td>88</td><td>0.0</td><td>0.0</td><td>48.9</td><td>45.5</td><td>5.7</td><td>47.2</td><td>OK</td><td>LOW</td><td>0.0</td></tr>
+<tr class='low'><td>FOLD_TO_TURN_PROBE</td><td>3bet</td><td>38</td><td>0.0</td><td>0.0</td><td>26.3</td><td>71.1</td><td>2.6</td><td>38.0</td><td>LOW</td><td>LOW</td><td>1.48</td></tr>
+<tr class='low_sample'><td>FOLD_TO_TURN_PROBE</td><td>4bet+</td><td>1</td><td>0.0</td><td>0.0</td><td>0.0</td><td>100.0</td><td>0.0</td><td>24.8</td><td>low_sample</td><td>IGNORE</td><td>3.0</td></tr>
+<tr class='ok'><td>FOLD_TO_TURN_PROBE</td><td>srp</td><td>183</td><td>0.0</td><td>0.0</td><td>47.0</td><td>47.5</td><td>5.5</td><td>48.8</td><td>OK</td><td>MEDIUM</td><td>0.0</td></tr>
+<tr class='ok'><td>FOLD_TO_TURN_PROBE</td><td>3bet</td><td>74</td><td>0.0</td><td>0.0</td><td>47.3</td><td>52.7</td><td>0.0</td><td>36.7</td><td>OK</td><td>LOW</td><td>0.0</td></tr>
+<tr class='low_sample'><td>FOLD_TO_TURN_PROBE</td><td>4bet+</td><td>3</td><td>0.0</td><td>0.0</td><td>66.7</td><td>33.3</td><td>0.0</td><td>49.2</td><td>low_sample</td><td>IGNORE</td><td>1.67</td></tr>
+<tr class='ok'><td>FOLD_TO_TURN_PROBE</td><td>srp</td><td>432</td><td>0.0</td><td>0.0</td><td>45.6</td><td>48.1</td><td>6.2</td><td>50.8</td><td>OK</td><td>HIGH</td><td>0.0</td></tr>
+<tr class='low_sample'><td>OOP_RESPONSE_VS_IP_FLOP_STAB_AFTER_MISSED_CB</td><td>3bet</td><td>16</td><td>0.0</td><td>0.0</td><td>56.2</td><td>37.5</td><td>6.2</td><td>52.5</td><td>low_sample</td><td>IGNORE</td><td>0.62</td></tr>
+<tr class='ok'><td>OOP_RESPONSE_VS_IP_FLOP_STAB_AFTER_MISSED_CB</td><td>srp</td><td>78</td><td>0.0</td><td>0.0</td><td>48.7</td><td>44.9</td><td>6.4</td><td>50.1</td><td>OK</td><td>LOW</td><td>0.0</td></tr>
+<tr class='ok'><td>OOP_RESPONSE_VS_IP_FLOP_STAB_AFTER_MISSED_CB</td><td>3bet</td><td>48</td><td>0.0</td><td>0.0</td><td>45.8</td><td>41.7</td><td>12.5</td><td>65.7</td><td>OK</td><td>LOW</td><td>0.0</td></tr>
+<tr class='low_sample'><td>OOP_RESPONSE_VS_IP_FLOP_STAB_AFTER_MISSED_CB</td><td>4bet+</td><td>3</td><td>0.0</td><td>0.0</td><td>66.7</td><td>0.0</td><td>33.3</td><td>96.3</td><td>low_sample</td><td>IGNORE</td><td>1.67</td></tr>
+<tr class='ok'><td>OOP_RESPONSE_VS_IP_FLOP_STAB_AFTER_MISSED_CB</td><td>srp</td><td>168</td><td>0.0</td><td>0.0</td><td>48.8</td><td>47.6</td><td>3.6</td><td>45.9</td><td>OK</td><td>MEDIUM</td><td>0.0</td></tr>
+<tr class='ok'><td>OOP_RESPONSE_VS_IP_FLOP_STAB_AFTER_MISSED_CB</td><td>3bet</td><td>113</td><td>0.0</td><td>0.0</td><td>37.2</td><td>39.8</td><td>23.0</td><td>76.4</td><td>OK</td><td>MEDIUM</td><td>0.0</td></tr>
+<tr class='low_sample'><td>OOP_RESPONSE_VS_IP_FLOP_STAB_AFTER_MISSED_CB</td><td>4bet+</td><td>5</td><td>0.0</td><td>0.0</td><td>60.0</td><td>40.0</td><td>0.0</td><td>50.0</td><td>low_sample</td><td>IGNORE</td><td>1.0</td></tr>
+<tr class='ok'><td>OOP_RESPONSE_VS_IP_FLOP_STAB_AFTER_MISSED_CB</td><td>srp</td><td>370</td><td>0.0</td><td>0.0</td><td>48.9</td><td>45.9</td><td>5.1</td><td>47.2</td><td>OK</td><td>HIGH</td><td>0.0</td></tr>
+<tr class='low_sample'><td>OOP_RESPONSE_VS_IP_TURN_STAB_AFTER_MISSED_CB</td><td>3bet</td><td>5</td><td>0.0</td><td>0.0</td><td>20.0</td><td>60.0</td><td>20.0</td><td>53.3</td><td>low_sample</td><td>IGNORE</td><td>1.5</td></tr>
+<tr class='low_sample'><td>OOP_RESPONSE_VS_IP_TURN_STAB_AFTER_MISSED_CB</td><td>srp</td><td>16</td><td>0.0</td><td>0.0</td><td>50.0</td><td>43.8</td><td>6.2</td><td>53.5</td><td>low_sample</td><td>IGNORE</td><td>0.0</td></tr>
+<tr class='low_sample'><td>OOP_RESPONSE_VS_IP_TURN_STAB_AFTER_MISSED_CB</td><td>3bet</td><td>9</td><td>0.0</td><td>0.0</td><td>66.7</td><td>33.3</td><td>0.0</td><td>30.5</td><td>low_sample</td><td>IGNORE</td><td>0.67</td></tr>
+<tr class='low_sample'><td>OOP_RESPONSE_VS_IP_TURN_STAB_AFTER_MISSED_CB</td><td>4bet+</td><td>1</td><td>0.0</td><td>0.0</td><td>100.0</td><td>0.0</td><td>0.0</td><td></td><td>low_sample</td><td>IGNORE</td><td>4.0</td></tr>
+<tr class='ok'><td>OOP_RESPONSE_VS_IP_TURN_STAB_AFTER_MISSED_CB</td><td>srp</td><td>34</td><td>0.0</td><td>0.0</td><td>58.8</td><td>38.2</td><td>2.9</td><td>50.8</td><td>OK</td><td>LOW</td><td>0.0</td></tr>
+<tr class='ok'><td>OOP_RESPONSE_VS_IP_TURN_STAB_AFTER_MISSED_CB</td><td>3bet</td><td>36</td><td>0.0</td><td>0.0</td><td>44.4</td><td>36.1</td><td>19.4</td><td>56.3</td><td>OK</td><td>LOW</td><td>0.0</td></tr>
+<tr class='low_sample'><td>OOP_RESPONSE_VS_IP_TURN_STAB_AFTER_MISSED_CB</td><td>4bet+</td><td>1</td><td>0.0</td><td>0.0</td><td>0.0</td><td>100.0</td><td>0.0</td><td>22.3</td><td>low_sample</td><td>IGNORE</td><td>3.5</td></tr>
+<tr class='ok'><td>OOP_RESPONSE_VS_IP_TURN_STAB_AFTER_MISSED_CB</td><td>srp</td><td>62</td><td>0.0</td><td>0.0</td><td>41.9</td><td>53.2</td><td>4.8</td><td>45.4</td><td>OK</td><td>LOW</td><td>0.0</td></tr>
+<tr class='low_sample'><td>PFA_RESPONSE_AFTER_TURN_GIVEUP</td><td>3bet</td><td>5</td><td>0.0</td><td>0.0</td><td>20.0</td><td>60.0</td><td>20.0</td><td>53.3</td><td>low_sample</td><td>IGNORE</td><td>1.0</td></tr>
+<tr class='low_sample'><td>PFA_RESPONSE_AFTER_TURN_GIVEUP</td><td>srp</td><td>16</td><td>0.0</td><td>0.0</td><td>50.0</td><td>43.8</td><td>6.2</td><td>53.5</td><td>low_sample</td><td>IGNORE</td><td>0.0</td></tr>
+<tr class='low_sample'><td>PFA_RESPONSE_AFTER_TURN_GIVEUP</td><td>3bet</td><td>9</td><td>0.0</td><td>0.0</td><td>66.7</td><td>33.3</td><td>0.0</td><td>30.5</td><td>low_sample</td><td>IGNORE</td><td>0.67</td></tr>
+<tr class='low_sample'><td>PFA_RESPONSE_AFTER_TURN_GIVEUP</td><td>4bet+</td><td>1</td><td>0.0</td><td>0.0</td><td>100.0</td><td>0.0</td><td>0.0</td><td></td><td>low_sample</td><td>IGNORE</td><td>4.0</td></tr>
+<tr class='ok'><td>PFA_RESPONSE_AFTER_TURN_GIVEUP</td><td>srp</td><td>34</td><td>0.0</td><td>0.0</td><td>58.8</td><td>38.2</td><td>2.9</td><td>50.8</td><td>OK</td><td>LOW</td><td>0.0</td></tr>
+<tr class='ok'><td>PFA_RESPONSE_AFTER_TURN_GIVEUP</td><td>3bet</td><td>36</td><td>0.0</td><td>0.0</td><td>44.4</td><td>36.1</td><td>19.4</td><td>56.3</td><td>OK</td><td>LOW</td><td>0.0</td></tr>
+<tr class='low_sample'><td>PFA_RESPONSE_AFTER_TURN_GIVEUP</td><td>4bet+</td><td>1</td><td>0.0</td><td>0.0</td><td>0.0</td><td>100.0</td><td>0.0</td><td>22.3</td><td>low_sample</td><td>IGNORE</td><td>3.0</td></tr>
+<tr class='ok'><td>PFA_RESPONSE_AFTER_TURN_GIVEUP</td><td>srp</td><td>62</td><td>0.0</td><td>0.0</td><td>41.9</td><td>53.2</td><td>4.8</td><td>45.4</td><td>OK</td><td>LOW</td><td>0.0</td></tr>
+<tr class='ok'><td>PFA_TURN_BARREL_AFTER_FLOP_CBET_CALLED</td><td>3bet</td><td>53</td><td>58.5</td><td>41.5</td><td>0.0</td><td>0.0</td><td>0.0</td><td>76.8</td><td>OK</td><td>LOW</td><td>0.0</td></tr>
+<tr class='low_sample'><td>PFA_TURN_BARREL_AFTER_FLOP_CBET_CALLED</td><td>4bet+</td><td>2</td><td>100.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>56.3</td><td>low_sample</td><td>IGNORE</td><td>3.0</td></tr>
+<tr class='ok'><td>PFA_TURN_BARREL_AFTER_FLOP_CBET_CALLED</td><td>srp</td><td>201</td><td>45.8</td><td>54.2</td><td>0.0</td><td>0.0</td><td>0.0</td><td>76.7</td><td>OK</td><td>MEDIUM</td><td>0.0</td></tr>
+<tr class='ok'><td>PFA_TURN_BARREL_AFTER_FLOP_CBET_CALLED</td><td>3bet</td><td>84</td><td>61.9</td><td>38.1</td><td>0.0</td><td>0.0</td><td>0.0</td><td>68.8</td><td>OK</td><td>LOW</td><td>0.0</td></tr>
+<tr class='low_sample'><td>PFA_TURN_BARREL_AFTER_FLOP_CBET_CALLED</td><td>4bet+</td><td>4</td><td>25.0</td><td>75.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>31.5</td><td>low_sample</td><td>IGNORE</td><td>1.5</td></tr>
+<tr class='ok'><td>PFA_TURN_BARREL_AFTER_FLOP_CBET_CALLED</td><td>srp</td><td>425</td><td>51.3</td><td>48.7</td><td>0.0</td><td>0.0</td><td>0.0</td><td>72.9</td><td>OK</td><td>HIGH</td><td>0.0</td></tr>
+<tr class='ok'><td>PFA_TURN_BARREL_AFTER_FLOP_CBET_CALLED</td><td>3bet</td><td>280</td><td>58.9</td><td>41.1</td><td>0.0</td><td>0.0</td><td>0.0</td><td>71.9</td><td>OK</td><td>MEDIUM</td><td>0.0</td></tr>
+<tr class='low_sample'><td>PFA_TURN_BARREL_AFTER_FLOP_CBET_CALLED</td><td>4bet+</td><td>16</td><td>87.5</td><td>12.5</td><td>0.0</td><td>0.0</td><td>0.0</td><td>55.4</td><td>low_sample</td><td>IGNORE</td><td>1.75</td></tr>
+<tr class='ok'><td>PFA_TURN_BARREL_AFTER_FLOP_CBET_CALLED</td><td>srp</td><td>840</td><td>47.6</td><td>52.4</td><td>0.0</td><td>0.0</td><td>0.0</td><td>72.5</td><td>OK</td><td>HIGH</td><td>0.0</td></tr>
+<tr class='ok'><td>TURN_PROBE_AFTER_FLOP_CHECKBACK</td><td>3bet</td><td>60</td><td>38.3</td><td>61.7</td><td>0.0</td><td>0.0</td><td>0.0</td><td>67.1</td><td>OK</td><td>LOW</td><td>0.0</td></tr>
+<tr class='low_sample'><td>TURN_PROBE_AFTER_FLOP_CHECKBACK</td><td>4bet+</td><td>2</td><td>50.0</td><td>50.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>50.0</td><td>low_sample</td><td>IGNORE</td><td>0.0</td></tr>
+<tr class='ok'><td>TURN_PROBE_AFTER_FLOP_CHECKBACK</td><td>srp</td><td>258</td><td>38.8</td><td>60.9</td><td>0.4</td><td>0.0</td><td>0.0</td><td>62.0</td><td>OK</td><td>MEDIUM</td><td>0.0</td></tr>
+<tr class='ok'><td>TURN_PROBE_AFTER_FLOP_CHECKBACK</td><td>3bet</td><td>107</td><td>39.3</td><td>60.7</td><td>0.0</td><td>0.0</td><td>0.0</td><td>55.4</td><td>OK</td><td>MEDIUM</td><td>0.0</td></tr>
+<tr class='low_sample'><td>TURN_PROBE_AFTER_FLOP_CHECKBACK</td><td>4bet+</td><td>5</td><td>40.0</td><td>60.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>66.5</td><td>low_sample</td><td>IGNORE</td><td>0.0</td></tr>
+<tr class='ok'><td>TURN_PROBE_AFTER_FLOP_CHECKBACK</td><td>srp</td><td>607</td><td>37.6</td><td>62.4</td><td>0.0</td><td>0.0</td><td>0.0</td><td>64.4</td><td>OK</td><td>HIGH</td><td>0.0</td></tr>
+<tr class='ok'><td>TURN_PROBE_AFTER_FLOP_CHECKBACK</td><td>3bet</td><td>230</td><td>37.0</td><td>63.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>65.1</td><td>OK</td><td>MEDIUM</td><td>0.0</td></tr>
+<tr class='low_sample'><td>TURN_PROBE_AFTER_FLOP_CHECKBACK</td><td>4bet+</td><td>19</td><td>42.1</td><td>57.9</td><td>0.0</td><td>0.0</td><td>0.0</td><td>68.5</td><td>low_sample</td><td>IGNORE</td><td>0.0</td></tr>
+<tr class='ok'><td>TURN_PROBE_AFTER_FLOP_CHECKBACK</td><td>srp</td><td>1231</td><td>41.3</td><td>58.7</td><td>0.1</td><td>0.0</td><td>0.0</td><td>67.3</td><td>OK</td><td>HIGH</td><td>0.0</td></tr>
+</tbody></table></div>
+<h2>How to read this report</h2>
+<div class='method'><p class='note'><strong>Review bands, not ground truth.</strong><br>LOW and HIGH mark observations outside configurable practical bands. <span class='code'>audit_required</span> suppresses interpretation when a definition remains unresolved. These labels are not solver outputs or automatic strategy changes.</p>
+<p class='note'><strong>Traceable by design.</strong><br>The local report folder also contains exact filters, benchmark definitions, aggregate splits and <span class='code'>pool_spots.csv</span> for source-hand review. Never publish granular files from real data without a privacy review.</p></div>
+</main></body></html>

@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-CoinPoker PLO 4-bet Showdown Analyzer
+CoinPoker PLO Four-bet Showdown Analyzer
 
 Finds preflop 4-bets made by non-Hero opponents, filters by starting stack in bb,
 and checks known/shown 4-bettor hole cards to estimate how often the 4-bet was AAxx.
 
 Default: PLO4 regular hands only, bombpots excluded, Hero excluded.
 
-Usage:
-    python coinpoker_plo_4bet_showdown_analyzer.py --input cash.txt --stake-filter PL50 --hero Hero --outdir fourbet_report
+Usage after installation:
+    plo-fourbet --input cash.txt --stake-filter PL50 --hero Hero --outdir fourbet_report
 
 Notes:
 - A 4-bet is defined as the third preflop raise in a hand:
@@ -33,10 +33,13 @@ import math
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-RANK_ORDER = "23456789TJQKA"
-RANK_VALUE = {r: i for i, r in enumerate(RANK_ORDER, start=2)}
+try:
+    from . import __version__
+    from .common import RANK_VALUE, assign_positions, parse_header, split_hand_history
+except ImportError:  # Supports direct execution during local debugging.
+    __version__ = "1.1.0"
+    from common import RANK_VALUE, assign_positions, parse_header, split_hand_history
 
-HEADER_RE = re.compile(r"CoinPoker Hand #(\d+): (.*?) \(([^)]+)\) ([0-9/]+ [0-9:]+) (\w+)")
 SEAT_RE = re.compile(r"Seat (\d+): (.+?) \(₮([0-9.]+) in chips\)")
 BUTTON_RE = re.compile(r"Seat #(\d+) is the button")
 RAISE_RE = re.compile(r"^(.+?): raises ₮([0-9.]+) to ₮([0-9.]+)")
@@ -45,6 +48,7 @@ ALLIN_RE = re.compile(r"^(.+?): ALLIN ₮([0-9.]+)")
 POST_SB_RE = re.compile(r"^(.+?): posts small blind ₮([0-9.]+)")
 POST_BB_RE = re.compile(r"^(.+?): posts big blind ₮([0-9.]+)")
 POST_ANTE_RE = re.compile(r"^(.+?): posts ante ₮([0-9.]+)")
+STRADDLE_RE = re.compile(r"^(.+?): STRADDLE ₮([0-9.]+)", re.I)
 FOLD_RE = re.compile(r"^(.+?): folds")
 STREET_RE = re.compile(r"^\*\*\* (?:FIRST |SECOND |THIRD )?(FLOP|TURN|RIVER) \*\*")
 
@@ -57,61 +61,6 @@ KNOWN_CARD_PATTERNS = [
     re.compile(r"^Seat \d+:\s+(.+?)\s+showed\s+\[([^\]]+)\]", re.I),
     re.compile(r"^Seat \d+:\s+(.+?)\s+mucked\s+\[([^\]]+)\]", re.I),
 ]
-
-
-def split_hand_history(text: str) -> List[str]:
-    text = text.replace("\r\n", "\n").replace("\r", "\n").strip()
-    if not text:
-        return []
-    return re.split(r"\n(?=CoinPoker Hand #)", text)
-
-
-def parse_header(line: str) -> Optional[Dict[str, Any]]:
-    m = HEADER_RE.match(line)
-    if not m:
-        return None
-    hand_id, desc, stakes_str, dt_str, tz = m.groups()
-    nums = [float(x) for x in re.findall(r"([0-9]+(?:\.[0-9]+)?)", stakes_str)]
-    sb = nums[0] if len(nums) > 0 else None
-    bb = nums[1] if len(nums) > 1 else None
-    third = nums[2] if len(nums) > 2 else None
-    plo_match = re.search(r"PLO\s+(\d+)", desc)
-    plo_cards = int(plo_match.group(1)) if plo_match else None
-    is_bombpot = "BombPot" in desc
-    return {
-        "hand_id": hand_id,
-        "desc": desc,
-        "stakes_str": stakes_str,
-        "dt": dt_str,
-        "tz": tz,
-        "sb": sb,
-        "bb": bb,
-        "ante": None if is_bombpot else third,
-        "bomb_amount": third if is_bombpot else None,
-        "plo_cards": plo_cards,
-        "is_bombpot": is_bombpot,
-        "stake_label": f"PL{int(round(bb * 100))}" if bb else "UNKNOWN",
-    }
-
-
-def assign_positions(seats: Dict[int, str], button_seat: Optional[int]) -> Dict[str, str]:
-    if not seats or button_seat not in seats:
-        return {}
-    seat_nums = sorted(seats.keys())
-    bidx = seat_nums.index(button_seat)
-    order = [seat_nums[(bidx + i) % len(seat_nums)] for i in range(len(seat_nums))]
-    labels_by_n = {
-        2: ["BTN/SB", "BB"],
-        3: ["BTN", "SB", "BB"],
-        4: ["BTN", "SB", "BB", "CO"],
-        5: ["BTN", "SB", "BB", "UTG", "CO"],
-        6: ["BTN", "SB", "BB", "UTG", "HJ", "CO"],
-        7: ["BTN", "SB", "BB", "UTG", "UTG1", "HJ", "CO"],
-        8: ["BTN", "SB", "BB", "UTG", "UTG1", "MP", "HJ", "CO"],
-        9: ["BTN", "SB", "BB", "UTG", "UTG1", "MP1", "MP2", "HJ", "CO"],
-    }
-    labels = labels_by_n.get(len(order), ["BTN"] + [f"P{i}" for i in range(1, len(order))])
-    return {seats[seat]: labels[i] for i, seat in enumerate(order)}
 
 
 def parse_cards(card_text: str) -> List[str]:
@@ -196,6 +145,9 @@ def pass_filters(meta: Dict[str, Any], args: argparse.Namespace) -> bool:
     else:
         raise ValueError(f"Unknown game filter: {args.game_filter}")
 
+    if meta.get("is_straddled") and not getattr(args, "include_straddles", False):
+        return False
+
     if args.stake_filter:
         allowed = {x.strip().upper() for x in args.stake_filter.split(",") if x.strip()}
         if meta.get("stake_label", "").upper() not in allowed:
@@ -216,6 +168,7 @@ def analyze_hand(block: str, args: argparse.Namespace) -> Tuple[Optional[str], L
     meta = parse_header(lines[0])
     if not meta:
         return "header", []
+    meta["is_straddled"] = any(STRADDLE_RE.match(line) for line in lines)
     if not pass_filters(meta, args):
         return None, []
 
@@ -255,7 +208,7 @@ def analyze_hand(block: str, args: argparse.Namespace) -> Tuple[Optional[str], L
         if street != "PREFLOP":
             continue
 
-        m = POST_SB_RE.match(line) or POST_BB_RE.match(line) or POST_ANTE_RE.match(line)
+        m = POST_SB_RE.match(line) or POST_BB_RE.match(line) or POST_ANTE_RE.match(line) or STRADDLE_RE.match(line)
         if m:
             player = m.group(1)
             amount = float(m.group(2))
@@ -387,6 +340,15 @@ def write_csv(rows: List[Dict[str, Any]], path: Path) -> None:
         w.writerows(rows)
 
 
+def export_detail_row(row: Dict[str, Any], include_identifiers: bool = False) -> Dict[str, Any]:
+    """Return a CSV-safe detail row with player identifiers removed by default."""
+    exported = dict(row)
+    if not include_identifiers:
+        exported.pop("fourbettor", None)
+        exported.pop("preflop_sequence", None)
+    return exported
+
+
 def pct_float_text(value: Any) -> float:
     try:
         if isinstance(value, str) and value.endswith("%"):
@@ -403,10 +365,10 @@ def html_escape(x: Any) -> str:
 def html_table(rows: List[Dict[str, Any]], cols: List[str], max_rows: int = 80) -> str:
     if not rows:
         return "<p><em>No rows.</em></p>"
-    out = ["<table>", "<thead><tr>" + "".join(f"<th>{html_escape(c)}</th>" for c in cols) + "</tr></thead>", "<tbody>"]
+    out = ["<div class='table-wrap'><table>", "<thead><tr>" + "".join(f"<th>{html_escape(c)}</th>" for c in cols) + "</tr></thead>", "<tbody>"]
     for r in rows[:max_rows]:
         out.append("<tr>" + "".join(f"<td>{html_escape(r.get(c, ''))}</td>" for c in cols) + "</tr>")
-    out.append("</tbody></table>")
+    out.append("</tbody></table></div>")
     return "\n".join(out)
 
 
@@ -419,10 +381,20 @@ def make_hand_class_summary(known_rows: List[Dict[str, Any]]) -> List[Dict[str, 
     ]
 
 
+def import_headless_pyplot():
+    """Load pyplot with a non-interactive backend suitable for CI and servers."""
+    import matplotlib
+
+    matplotlib.use("Agg", force=True)
+    import matplotlib.pyplot as plt
+
+    return plt
+
+
 def generate_fourbet_charts(outdir: Path, summary_rows: List[Dict[str, Any]], known_rows: List[Dict[str, Any]]) -> List[str]:
     paths: List[str] = []
     try:
-        import matplotlib.pyplot as plt
+        plt = import_headless_pyplot()
     except Exception:
         return paths
     chart_dir = outdir / "charts"
@@ -481,31 +453,34 @@ def generate_fourbet_dashboard(outdir: Path, summary_rows: List[Dict[str, Any]],
             rel_charts.append(Path(p).relative_to(outdir).as_posix())
         except Exception:
             rel_charts.append(Path(p).as_posix())
-    chart_html = "\n".join(f"<figure><img src='{html_escape(c)}' alt='{html_escape(c)}'><figcaption>{html_escape(Path(c).stem.replace('_',' ').title())}</figcaption></figure>" for c in rel_charts)
+    chart_html = "\n".join(f"<figure><img src='{html_escape(c)}' alt='{html_escape(Path(c).stem.replace('_',' '))}'><figcaption>{html_escape(Path(c).stem.replace('_',' ').title())}</figcaption></figure>" for c in rel_charts)
+    if not chart_html:
+        chart_html = "<p class='empty'>Charts were disabled for this run.</p>"
     cols = ["stake_label", "fourbettor_position", "total_4bets_stack_filtered", "known_4bettor_hands", "known_rate_pct", "known_AAxx", "AAxx_pct_of_known", "unknown_4bettor_hands"]
     class_rows = make_hand_class_summary(known_rows)
     html_text = f"""<!doctype html>
-<html><head><meta charset='utf-8'><title>PLO 4-bet Showdown Dashboard</title>
+<html lang='en'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'><title>CoinPoker PLO Four-bet Showdown Analyzer</title>
 <style>
-:root {{ --bg:#111318; --panel:#1b1f2a; --text:#edf1f7; --muted:#aeb6c2; --border:#303746; }}
-body {{ margin:0; font-family:Inter,Segoe UI,Arial,sans-serif; background:var(--bg); color:var(--text); line-height:1.45; }}
-main {{ max-width:1180px; margin:0 auto; padding:28px; }}
-h1 {{ margin:0 0 4px; font-size:32px; }} h2 {{ margin-top:34px; border-bottom:1px solid var(--border); padding-bottom:8px; }}
-.subtitle,.note {{ color:var(--muted); }}
-.cards {{ display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px; margin:22px 0; }}
-.card {{ background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:14px 16px; }}
-.card .label {{ color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.06em; }} .card .value {{ font-size:22px; font-weight:700; margin-top:6px; }}
-.grid {{ display:grid; grid-template-columns:repeat(auto-fit,minmax(420px,1fr)); gap:18px; align-items:start; }}
-figure {{ background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:12px; margin:0; }} img {{ max-width:100%; display:block; border-radius:8px; background:#fff; }} figcaption {{ color:var(--muted); font-size:12px; margin-top:8px; }}
-table {{ border-collapse:collapse; width:100%; font-size:13px; background:var(--panel); border-radius:12px; overflow:hidden; }} th,td {{ border-bottom:1px solid var(--border); padding:7px 9px; }} th {{ text-align:left; background:#242a37; }}
+:root {{ color-scheme:dark; --bg:#07100d; --panel:#0d1915; --panel2:#12221c; --text:#eef5ef; --muted:#9facaa; --border:#22352e; --green:#55d698; }}
+* {{ box-sizing:border-box; }} body {{ margin:0; font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif; background:radial-gradient(circle at 85% 0%,rgba(52,145,98,.13),transparent 30rem),var(--bg); color:var(--text); line-height:1.5; }}
+main {{ max-width:1220px; margin:0 auto; padding:clamp(20px,4vw,52px); }} .eyebrow {{ color:var(--green); font-size:12px; font-weight:800; letter-spacing:.13em; text-transform:uppercase; }}
+h1 {{ margin:12px 0 8px; font-size:clamp(38px,6vw,64px); line-height:1; letter-spacing:-.055em; }} h2 {{ margin:48px 0 18px; font-size:clamp(24px,3vw,32px); letter-spacing:-.035em; }}
+.subtitle,.note,.empty {{ color:var(--muted); }} .subtitle {{ max-width:780px; font-size:17px; }}
+.cards {{ display:grid; grid-template-columns:repeat(6,1fr); gap:1px; margin:34px 0 12px; overflow:hidden; border:1px solid var(--border); border-radius:16px; background:var(--border); }}
+.card {{ background:rgba(13,25,21,.97); padding:20px; }} .card .label {{ color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:.09em; }} .card .value {{ font-size:24px; font-weight:760; letter-spacing:-.035em; margin-top:7px; }}
+.grid {{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; align-items:start; }} figure {{ background:linear-gradient(145deg,var(--panel2),var(--panel)); border:1px solid var(--border); border-radius:16px; padding:12px; margin:0; }} img {{ max-width:100%; display:block; border-radius:10px; background:#fff; }} figcaption {{ color:var(--muted); font-size:12px; margin:9px 4px 3px; }}
+.table-wrap {{ width:100%; overflow:auto; border:1px solid var(--border); border-radius:14px; }} table {{ border-collapse:collapse; width:100%; min-width:780px; font-size:12px; background:var(--panel); }} th,td {{ border-bottom:1px solid var(--border); padding:9px 11px; }} th {{ text-align:left; background:#162820; white-space:nowrap; }} tr:last-child td {{ border-bottom:0; }} tr:hover td {{ background:#10221b; }}
+.note {{ margin-top:22px; padding:20px; border:1px solid var(--border); border-radius:14px; background:var(--panel); }}
+@media(max-width:960px) {{ .cards {{ grid-template-columns:repeat(3,1fr); }} }} @media(max-width:720px) {{ .grid {{ grid-template-columns:1fr; }} .cards {{ grid-template-columns:repeat(2,1fr); }} }} @media(max-width:440px) {{ .cards {{ grid-template-columns:1fr; }} }}
 </style></head><body><main>
-<h1>PLO 4-bet Showdown Dashboard</h1>
-<p class='subtitle'>Population-only inference of known/shown 4-bettor hand composition. Unknown hands are excluded from AAxx denominator.</p>
+<div class='eyebrow'>Conditional showdown sample</div>
+<h1>CoinPoker PLO Four-bet Analyzer</h1>
+<p class='subtitle'>Population-level composition of known/shown four-bet hands. Unknown cards stay visible in coverage counts and are excluded from hand-class denominators.</p>
 <section class='cards'>{''.join(f"<div class='card'><div class='label'>{html_escape(k)}</div><div class='value'>{html_escape(v)}</div></div>" for k,v in cards)}</section>
-<h2>Charts</h2><div class='grid'>{chart_html}</div>
+<h2>Composition overview</h2><div class='grid'>{chart_html}</div>
 <h2>Position summary</h2>{html_table(summary_rows, cols, max_rows=80)}
 <h2>Known hand classes</h2>{html_table(class_rows, ['hand_class','count','pct'], max_rows=20)}
-<p class='note'>ALLIN is counted as a 4-bet only when it increases the current preflop bet. Hero is excluded by default.</p>
+<p class='note'>A four-bet is the third preflop raise. ALLIN counts only when it increases the amount to call. Hero is excluded by default. Showdown composition is conditional on cards being revealed and can be affected by selection bias.</p>
 </main></body></html>"""
     (outdir / "fourbet_dashboard.html").write_text(html_text, encoding="utf-8")
     (outdir / "fourbet_report.html").write_text(html_text, encoding="utf-8")
@@ -584,8 +559,9 @@ def make_md(summary_rows: List[Dict[str, Any]], rows: List[Dict[str, Any]], args
     return "\n".join(md)
 
 
-def main() -> None:
+def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description="Analyze known/shown villain 4-bets for AAxx frequency")
+    p.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     p.add_argument("--input", required=True, help="CoinPoker hand history txt file")
     p.add_argument("--hero", default="Hero", help="Hero screen name, default Hero")
     p.add_argument("--include-hero", action="store_true", help="Include Hero 4-bets too. Default excludes Hero.")
@@ -594,13 +570,23 @@ def main() -> None:
     p.add_argument("--min-stack-bb", type=float, default=60.0, help="Minimum starting stack in bb for the 4-bettor")
     p.add_argument("--game-filter", default="plo4", choices=["plo4", "plo5", "bombpot", "all"], help="Default PLO4 regular only")
     p.add_argument("--include-bombpot", action="store_true")
+    p.add_argument("--include-straddles", action="store_true", help="Include straddled hands. Default excludes them")
     p.add_argument("--stake-filter", default="", help="Comma-separated stakes, e.g. PL25,PL50")
     p.add_argument("--date-from", default="", help="YYYY-MM-DD inclusive")
     p.add_argument("--date-to", default="", help="YYYY-MM-DD inclusive")
-    p.add_argument("--no-charts", action="store_true", help="Skip PNG charts and HTML dashboard images")
-    args = p.parse_args()
+    p.add_argument("--no-charts", action="store_true", help="Skip PNG chart generation; the HTML dashboard is still written")
+    p.add_argument("--include-identifiers", action="store_true", help="Include player IDs and named preflop sequences in granular CSV files. Off by default.")
+    return p
 
-    text = Path(args.input).read_text(encoding="utf-8", errors="replace")
+
+def main(argv: Optional[List[str]] = None) -> None:
+    p = build_parser()
+    args = p.parse_args(argv)
+
+    input_path = Path(args.input)
+    if not input_path.is_file():
+        p.error(f"input file not found: {input_path}")
+    text = input_path.read_text(encoding="utf-8", errors="replace")
     blocks = split_hand_history(text)
     rows: List[Dict[str, Any]] = []
     parse_errors = collections.Counter()
@@ -614,16 +600,20 @@ def main() -> None:
     outdir.mkdir(parents=True, exist_ok=True)
     known_rows = [r for r in rows if r.get("known_cards")]
     summary_rows = summarize(rows)
-    write_csv(rows, outdir / "fourbet_all.csv")
-    write_csv(known_rows, outdir / "fourbet_known_cards.csv")
+    exported_rows = [export_detail_row(row, args.include_identifiers) for row in rows]
+    exported_known_rows = [export_detail_row(row, args.include_identifiers) for row in known_rows]
+    write_csv(exported_rows, outdir / "fourbet_all.csv")
+    write_csv(exported_known_rows, outdir / "fourbet_known_cards.csv")
     write_csv(summary_rows, outdir / "fourbet_summary.csv")
     (outdir / "filters_applied.json").write_text(json.dumps({
-        "input": args.input,
+        "input": input_path.name,
         "hero": args.hero,
         "include_hero": args.include_hero,
+        "include_identifiers": args.include_identifiers,
         "min_stack_bb": args.min_stack_bb,
         "game_filter": args.game_filter,
         "include_bombpot": args.include_bombpot,
+        "include_straddles": args.include_straddles,
         "stake_filter": args.stake_filter or "all",
         "date_from": args.date_from or "none",
         "date_to": args.date_to or "none",
@@ -637,7 +627,7 @@ def main() -> None:
     chart_paths: List[str] = []
     if not args.no_charts:
         chart_paths = generate_fourbet_charts(outdir, summary_rows, known_rows)
-        generate_fourbet_dashboard(outdir, summary_rows, rows, known_rows, chart_paths, args)
+    generate_fourbet_dashboard(outdir, summary_rows, rows, known_rows, chart_paths, args)
 
     known_aaxx = sum(1 for r in known_rows if r.get("is_aaxx") is True)
     print("Done.")

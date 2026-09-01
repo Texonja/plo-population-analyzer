@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-PLO Population Tendencies Analyzer PRO
+CoinPoker PLO Population Analyzer
 
 This is NOT a solver and NOT an ML coach. It measures poker lines/sequences from
 CoinPoker hand histories, e.g.:
@@ -12,8 +12,8 @@ CoinPoker hand histories, e.g.:
 
 Default: PLO 4 regular hands only. PLO5 and BombPot are excluded unless requested.
 
-Usage:
-    python coinpoker_plo_pool_analyzer_v2.py --input cash.txt --hero Hero --outdir pool_report
+Usage after installation:
+    plo-population --input cash.txt --hero Hero --outdir pool_report
 
 Filters:
     --game-filter plo4 | plo5 | bombpot | all       default: plo4
@@ -32,19 +32,24 @@ import html
 import json
 import math
 import re
-import shutil
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-RANK_ORDER = "23456789TJQKA"
-RANK_VALUE = {r: i for i, r in enumerate(RANK_ORDER, start=2)}
+try:
+    from . import __version__
+    from .common import RANK_VALUE, assign_positions, parse_header, split_hand_history
+except ImportError:  # Supports direct execution during local debugging.
+    __version__ = "1.1.0"
+    from common import RANK_VALUE, assign_positions, parse_header, split_hand_history
+
 MONEY_RE = re.compile(r"₮([0-9]+(?:\.[0-9]+)?)")
 
 ACTION_PATTERNS = [
     ("posts_ante", re.compile(r"^(.+?): posts ante ₮([0-9.]+)")),
     ("posts_sb", re.compile(r"^(.+?): posts small blind ₮([0-9.]+)")),
     ("posts_bb", re.compile(r"^(.+?): posts big blind ₮([0-9.]+)")),
+    ("straddle", re.compile(r"^(.+?): STRADDLE ₮([0-9.]+)", re.I)),
     ("bets", re.compile(r"^(.+?): bets ₮([0-9.]+)")),
     ("calls", re.compile(r"^(.+?): calls ₮([0-9.]+)")),
     ("raises", re.compile(r"^(.+?): raises ₮([0-9.]+) to ₮([0-9.]+)")),
@@ -71,67 +76,11 @@ def safe_div(a: float, b: float, default: float = 0.0) -> float:
     return default if not b else a / b
 
 
-def split_hand_history(text: str) -> List[str]:
-    text = text.replace("\r\n", "\n").replace("\r", "\n").strip()
-    if not text:
-        return []
-    return re.split(r"\n(?=CoinPoker Hand #)", text)
-
-
 def parse_all_cards_from_brackets(text: str) -> List[str]:
     cards: List[str] = []
     for group in re.findall(r"\[([^\]]*)\]", text):
         cards.extend(group.split())
     return cards
-
-
-def parse_header(line: str) -> Optional[Dict[str, Any]]:
-    m = re.match(r"CoinPoker Hand #(\d+): (.*?) \(([^)]+)\) ([0-9/]+ [0-9:]+) (\w+)", line)
-    if not m:
-        return None
-    hand_id, desc, stakes_str, dt_str, tz = m.groups()
-    nums = [float(x) for x in re.findall(r"([0-9]+(?:\.[0-9]+)?)", stakes_str)]
-    sb = nums[0] if len(nums) > 0 else None
-    bb = nums[1] if len(nums) > 1 else None
-    third = nums[2] if len(nums) > 2 else None
-    plo_match = re.search(r"PLO\s+(\d+)", desc)
-    plo_cards = int(plo_match.group(1)) if plo_match else None
-    is_bombpot = "BombPot" in desc
-    return {
-        "hand_id": hand_id,
-        "desc": desc,
-        "stakes_str": stakes_str,
-        "dt": dt_str,
-        "tz": tz,
-        "sb": sb,
-        "bb": bb,
-        "ante": None if is_bombpot else third,
-        "bomb_amount": third if is_bombpot else None,
-        "plo_cards": plo_cards,
-        "is_bombpot": is_bombpot,
-        "stake_label": f"PL{int(round(bb * 100))}" if bb else "UNKNOWN",
-    }
-
-
-def assign_positions(seats: Dict[int, str], button_seat: Optional[int]) -> Dict[str, str]:
-    if not seats or button_seat not in seats:
-        return {}
-    seat_nums = sorted(seats.keys())
-    bidx = seat_nums.index(button_seat)
-    order = [seat_nums[(bidx + i) % len(seat_nums)] for i in range(len(seat_nums))]
-    n = len(order)
-    labels_by_n = {
-        2: ["BTN/SB", "BB"],
-        3: ["BTN", "SB", "BB"],
-        4: ["BTN", "SB", "BB", "CO"],
-        5: ["BTN", "SB", "BB", "UTG", "CO"],
-        6: ["BTN", "SB", "BB", "UTG", "HJ", "CO"],
-        7: ["BTN", "SB", "BB", "UTG", "UTG1", "HJ", "CO"],
-        8: ["BTN", "SB", "BB", "UTG", "UTG1", "MP", "HJ", "CO"],
-        9: ["BTN", "SB", "BB", "UTG", "UTG1", "MP1", "MP2", "HJ", "CO"],
-    }
-    labels = labels_by_n.get(n, ["BTN"] + [f"P{i}" for i in range(1, n)])
-    return {seats[seat]: labels[i] for i, seat in enumerate(order)}
 
 
 def postflop_order_players(seats: Dict[int, str], button_seat: Optional[int]) -> List[str]:
@@ -236,6 +185,7 @@ class Event:
     pot_before: float = 0.0
     size_pot_pct: float = math.nan
     idx: int = 0
+    raw_line: str = ""
 
 
 @dataclass
@@ -296,6 +246,17 @@ class Hand:
         return len(self.active_players(street)) == 2
 
 
+@dataclass
+class FlopCbetEvaluation:
+    included: bool
+    reason: str
+    pfa: str = ""
+    defender: str = ""
+    pfa_is_ip: Optional[bool] = None
+    cbet: Optional[Event] = None
+    response: Optional[Event] = None
+
+
 def parse_hand(hand_text: str, hero: str = "Hero") -> Optional[Hand]:
     lines = hand_text.splitlines()
     if not lines:
@@ -329,6 +290,8 @@ def parse_hand(hand_text: str, hero: str = "Hero") -> Optional[Hand]:
             hero_cards = parse_all_cards_from_brackets(line)
             break
     meta.update(classify_starting_hand(hero_cards))
+    meta["straddle_count"] = 0
+    meta["is_straddled"] = False
 
     street = "PREFLOP"
     street_contrib: Dict[str, float] = collections.defaultdict(float)
@@ -378,20 +341,36 @@ def parse_hand(hand_text: str, hero: str = "Hero") -> Optional[Hand]:
             player = m.group(1)
             amount = 0.0
             total_to: Optional[float] = None
-            if raw_action in ("posts_ante", "posts_sb", "posts_bb", "bets", "calls", "allin", "return", "collected"):
+            if raw_action in ("posts_ante", "posts_sb", "posts_bb", "straddle", "bets", "calls", "allin", "return", "collected"):
                 amount = float(m.group(2))
             elif raw_action == "raises":
                 total_to = float(m.group(3))
                 amount = max(0.0, total_to - street_contrib[player])
 
+            # CoinPoker writes both calls and raises as `Player: ALLIN X`.
+            # Classify the event from its new street contribution relative to
+            # the amount already to call; the ALLIN token alone is not aggression.
+            current_to_call = max(street_contrib.values(), default=0.0)
+            player_contrib_before = street_contrib[player]
+            action = ACTION_MAP.get(raw_action)
+            if raw_action == "allin":
+                allin_total = player_contrib_before + amount
+                if allin_total > current_to_call + 1e-9:
+                    action = "bet" if current_to_call <= 1e-9 else "raise"
+                else:
+                    action = "call"
+
             pot_before = pot
             if raw_action == "posts_ante":
                 total_contrib[player] += amount
                 pot += amount
-            elif raw_action in ("posts_sb", "posts_bb"):
+            elif raw_action in ("posts_sb", "posts_bb", "straddle"):
                 total_contrib[player] += amount
                 street_contrib[player] += amount
                 pot += amount
+                if raw_action == "straddle":
+                    meta["straddle_count"] = int(meta.get("straddle_count", 0)) + 1
+                    meta["is_straddled"] = True
             elif raw_action in ("bets", "calls"):
                 total_contrib[player] += amount
                 street_contrib[player] += amount
@@ -417,7 +396,7 @@ def parse_hand(hand_text: str, hero: str = "Hero") -> Optional[Hand]:
                     hero_fold_street = street
 
             if street == "PREFLOP":
-                if raw_action == "raises":
+                if action == "raise":
                     if player == hero:
                         hero_vpip = True
                         hero_pfr = True
@@ -427,14 +406,13 @@ def parse_hand(hand_text: str, hero: str = "Hero") -> Optional[Hand]:
                             hero_3bet = True
                     preflop_raises += 1
                     last_preflop_raiser = player
-                elif raw_action in ("calls", "allin") and player == hero:
+                elif action == "call" and player == hero:
                     hero_vpip = True
 
-            action = ACTION_MAP.get(raw_action)
             if action:
                 size_pct = safe_div(amount, pot_before, default=math.nan) if action in ("bet", "call", "raise", "allin") else math.nan
                 event_idx += 1
-                events.setdefault(street, []).append(Event(street=street, player=player, action=action, raw_action=raw_action, amount=amount, pot_before=pot_before, size_pot_pct=size_pct, idx=event_idx))
+                events.setdefault(street, []).append(Event(street=street, player=player, action=action, raw_action=raw_action, amount=amount, pot_before=pot_before, size_pot_pct=size_pct, idx=event_idx, raw_line=line))
             break
         if matched:
             continue
@@ -710,6 +688,115 @@ def first_aggressive_after(events: List[Event], player: str, after_idx: int) -> 
     return None
 
 
+def evaluate_flop_cbet(h: Hand) -> FlopCbetEvaluation:
+    """Evaluate one hand against a strict, auditable flop c-bet definition.
+
+    The denominator contains only heads-up flops where the final preflop
+    aggressor makes the first bet on the flop and the defender has a recorded
+    fold/call/raise response. Donk bets, check-throughs, multiway flops and
+    malformed action orders are explicitly excluded with a reason.
+    """
+    pfa = h.last_preflop_raiser
+    if not pfa or h.pot_type not in {"srp", "3bet", "4bet+"}:
+        return FlopCbetEvaluation(False, "no_preflop_aggressor", pfa=pfa)
+
+    flop_order = h.active_players("FLOP")
+    if not flop_order:
+        return FlopCbetEvaluation(False, "no_flop_reached", pfa=pfa)
+    if len(flop_order) != 2:
+        return FlopCbetEvaluation(False, f"flop_not_heads_up_{len(flop_order)}way", pfa=pfa)
+    if pfa not in flop_order:
+        return FlopCbetEvaluation(False, "preflop_aggressor_not_active_on_flop", pfa=pfa)
+
+    defender = next((player for player in flop_order if player != pfa), "")
+    if not defender:
+        return FlopCbetEvaluation(False, "defender_not_found", pfa=pfa)
+
+    events = h.events.get("FLOP", [])
+    pfa_is_ip = flop_order[-1] == pfa
+    base = {
+        "pfa": pfa,
+        "defender": defender,
+        "pfa_is_ip": pfa_is_ip,
+    }
+    if not events:
+        return FlopCbetEvaluation(False, "no_flop_actions", **base)
+
+    cbet: Optional[Event] = None
+    if pfa_is_ip:
+        defender_first = first_action_by_any(events, [defender])
+        if defender_first is None:
+            return FlopCbetEvaluation(False, "defender_action_missing", **base)
+        if defender_first.action != "check":
+            return FlopCbetEvaluation(False, "defender_led_into_pfa", **base)
+        pfa_action = next_action_by_player(events, pfa, defender_first.idx)
+        if pfa_action is None:
+            return FlopCbetEvaluation(False, "pfa_action_missing_after_check", **base)
+        if pfa_action.action == "check":
+            return FlopCbetEvaluation(False, "pfa_checked_back_no_cbet", **base)
+        if pfa_action.action != "bet":
+            return FlopCbetEvaluation(False, f"unexpected_pfa_action_{pfa_action.action}", **base)
+        cbet = pfa_action
+    else:
+        first_actor_action = first_action_by_any(events, flop_order)
+        if first_actor_action is None:
+            return FlopCbetEvaluation(False, "flop_action_missing", **base)
+        if first_actor_action.player != pfa:
+            return FlopCbetEvaluation(False, "invalid_flop_action_order", **base)
+        if first_actor_action.action == "check":
+            return FlopCbetEvaluation(False, "pfa_checked_no_cbet", **base)
+        if first_actor_action.action != "bet":
+            return FlopCbetEvaluation(False, f"unexpected_pfa_action_{first_actor_action.action}", **base)
+        cbet = first_actor_action
+
+    response = next_action_by_player(events, defender, cbet.idx)
+    if response is None:
+        return FlopCbetEvaluation(False, "defender_response_missing", cbet=cbet, **base)
+    category = response_category(response)
+    if category not in {"fold", "call", "raise_or_allin"}:
+        return FlopCbetEvaluation(False, f"unexpected_defender_response_{category}", cbet=cbet, response=response, **base)
+    return FlopCbetEvaluation(True, f"included_{category}", cbet=cbet, response=response, **base)
+
+
+def format_event_sequence(events: List[Event]) -> str:
+    """Render exact source action lines in event order for a manual audit."""
+    return " | ".join(event.raw_line or f"{event.player}: {event.raw_action}" for event in events)
+
+
+def make_flop_cbet_audit_row(h: Hand, evaluation: Optional[FlopCbetEvaluation] = None) -> Dict[str, Any]:
+    evaluation = evaluation or evaluate_flop_cbet(h)
+    cbet = evaluation.cbet
+    response = evaluation.response
+    active_players = h.active_players("FLOP")
+    return {
+        "hand_id": h.hand_id,
+        "stake": h.stake_label,
+        "pot_type": h.pot_type,
+        "players_dealt": h.meta.get("n_players_dealt", ""),
+        "preflop_raise_count": h.preflop_raises,
+        "preflop_aggressor": evaluation.pfa,
+        "pfa_position": player_pos(h, evaluation.pfa) if evaluation.pfa else "",
+        "pfa_ip_oop": "IP" if evaluation.pfa_is_ip is True else "OOP" if evaluation.pfa_is_ip is False else "",
+        "flop_active_count": len(active_players),
+        "flop_active_players": " | ".join(f"{player} ({player_pos(h, player)})" for player in active_players),
+        "defender": evaluation.defender,
+        "defender_position": player_pos(h, evaluation.defender) if evaluation.defender else "",
+        "flop_board": " ".join(h.boards.get("FLOP", [])),
+        "full_flop_action_sequence": format_event_sequence(h.events.get("FLOP", [])),
+        "detected_cbet_bettor": cbet.player if cbet else "",
+        "cbet_raw_action": cbet.raw_action if cbet else "",
+        "cbet_amount": round(cbet.amount, 4) if cbet else "",
+        "pot_before_cbet": round(cbet.pot_before, 4) if cbet else "",
+        "cbet_size_pct": round(cbet.size_pot_pct * 100.0, 1) if cbet and not math.isnan(cbet.size_pot_pct) else "",
+        "response_player": response.player if response else "",
+        "response_raw_action": response.raw_action if response else "",
+        "response_classified_action": response_category(response) if response else "",
+        "denominator_eligible": evaluation.included,
+        "reason_included": evaluation.reason if evaluation.included else "",
+        "reason_excluded": "" if evaluation.included else evaluation.reason,
+    }
+
+
 def extract_required_pool_records(h: Hand, args: argparse.Namespace) -> List[Dict[str, Any]]:
     """Extract population-level opportunities/responses.
 
@@ -813,36 +900,22 @@ def extract_required_pool_records(h: Hand, args: argparse.Namespace) -> List[Dic
         ev = next_action_by_player(river_events, pfa, def_first.idx)
         return ev, ev is not None
 
-    # A) Fold/call/raise vs flop c-bet, clean HU flop.
-    if has_pfa and len(flop_order) == 2 and pfa in flop_order:
-        defender = other_player(flop_order, pfa)
-        pfa_ip = pfa_is_ip(flop_order)
-        pfa_bet: Optional[Event] = None
-        def_resp: Optional[Event] = None
-        if pfa_ip is False:  # PFA OOP.
-            pfa_bet = first_action_by_any(flop_events, [pfa])
-            if pfa_bet and pfa_bet.action in AGGRO_ACTIONS:
-                def_resp = next_action_by_player(flop_events, defender, pfa_bet.idx)
-        elif pfa_ip is True:  # PFA IP after OOP check.
-            def_first = first_action_by_any(flop_events, [defender])
-            if def_first and def_first.action == "check":
-                pfa_bet = next_action_by_player(flop_events, pfa, def_first.idx)
-                if pfa_bet and pfa_bet.action in AGGRO_ACTIONS:
-                    def_resp = next_action_by_player(flop_events, defender, pfa_bet.idx)
-        if pfa_bet and pfa_bet.action in AGGRO_ACTIONS and def_resp and include_player(defender, args):
-            recs.append(make_pool_record(
-                h,
-                "FOLD_TO_FLOP_CBET",
-                "Fold/call/raise vs flop c-bet",
-                "FLOP",
-                defender,
-                response_category(def_resp),
-                def_resp.size_pot_pct,
-                facing_action="flop_cbet",
-                aggressor=pfa,
-                context="PFA c-bets flop HU; defender responds",
-                facing_size_pct=pfa_bet.size_pot_pct,
-            ))
+    # A) Fold/call/raise vs flop c-bet, using the same strict definition as the audit output.
+    flop_cbet = evaluate_flop_cbet(h)
+    if flop_cbet.included and flop_cbet.cbet and flop_cbet.response and include_player(flop_cbet.defender, args):
+        recs.append(make_pool_record(
+            h,
+            "FOLD_TO_FLOP_CBET",
+            "Fold/call/raise vs flop c-bet",
+            "FLOP",
+            flop_cbet.defender,
+            response_category(flop_cbet.response),
+            flop_cbet.response.size_pot_pct,
+            facing_action="flop_cbet",
+            aggressor=flop_cbet.pfa,
+            context="Final PFA makes first flop bet HU; defender response validated by c-bet audit",
+            facing_size_pct=flop_cbet.cbet.size_pot_pct,
+        ))
 
     # B) Existing: Bet IP vs missed flop c-bet + NEW OOP response vs that stab.
     # PFA is OOP on flop, checks first, IP player decides bet/check. If IP bets, OOP responds fold/call/xr.
@@ -1159,6 +1232,11 @@ def extract_required_pool_records(h: Hand, args: argparse.Namespace) -> List[Dic
 DEFAULT_BENCHMARKS: Dict[str, Dict[str, Any]] = {
     "FOLD_TO_FLOP_CBET": {
         "metric": "fold_pct", "low": 25.0, "high": 45.0,
+        "status": "audit_required",
+        "audit_note": (
+            "definition audit unresolved: analyzer results do not match the comparison CoinPoker HUD range; "
+            "do not infer strategy until denominator equivalence is established"
+        ),
         "low_note": "defenders are very sticky vs flop c-bet; c-bet more value/equity-heavy and plan turns",
         "high_note": "defenders overfold vs flop c-bet; more bluff/protection c-bets may be available",
     },
@@ -1261,6 +1339,8 @@ def benchmark_flag(row: Dict[str, Any], benchmarks: Dict[str, Dict[str, Any]], m
     b = benchmarks.get(spot_id)
     if not b:
         return "", ""
+    if b.get("status") == "audit_required":
+        return "audit_required", str(b.get("audit_note", "definition requires validation before interpretation"))
     n = int(row.get("opportunities") or 0)
     if n < min_sample:
         return "low_sample", "sample below min-sample"
@@ -1323,11 +1403,11 @@ def html_escape(x: Any) -> str:
 def html_table(rows: List[Dict[str, Any]], cols: List[str], max_rows: int = 50) -> str:
     if not rows:
         return "<p><em>No rows.</em></p>"
-    out = ["<table>", "<thead><tr>" + "".join(f"<th>{html_escape(c)}</th>" for c in cols) + "</tr></thead>", "<tbody>"]
+    out = ["<div class='table-wrap'><table>", "<thead><tr>" + "".join(f"<th>{html_escape(c)}</th>" for c in cols) + "</tr></thead>", "<tbody>"]
     for r in rows[:max_rows]:
         cls = str(r.get("benchmark_flag", "")).lower()
         out.append(f"<tr class='{html_escape(cls)}'>" + "".join(f"<td>{html_escape(r.get(c, ''))}</td>" for c in cols) + "</tr>")
-    out.append("</tbody></table>")
+    out.append("</tbody></table></div>")
     return "\n".join(out)
 
 
@@ -1401,7 +1481,9 @@ def summarize_records(records: List[Dict[str, Any]], benchmarks: Dict[str, Dict[
             metric_val = float(base.get(metric, "")) if metric else math.nan
             low = float(b.get("low", math.nan))
             high = float(b.get("high", math.nan))
-            if metric and not math.isnan(metric_val) and not math.isnan(low) and not math.isnan(high):
+            if b.get("status") == "audit_required":
+                deviation = 0.0
+            elif metric and not math.isnan(metric_val) and not math.isnan(low) and not math.isnan(high):
                 if metric_val < low:
                     deviation = metric_val - low
                 elif metric_val > high:
@@ -1436,6 +1518,54 @@ def write_csv(rows: List[Dict[str, Any]], path: Path) -> None:
             w.writerow(r)
 
 
+def stratified_flop_cbet_sample(rows: List[Dict[str, Any]], limit: int) -> List[Dict[str, Any]]:
+    """Return a deterministic round-robin sample across key c-bet strata."""
+    if limit <= 0:
+        return []
+    included = [row for row in rows if row.get("denominator_eligible") is True]
+    groups: Dict[Tuple[str, str, str, str], List[Dict[str, Any]]] = collections.defaultdict(list)
+    for row in included:
+        key = (
+            str(row.get("stake", "")),
+            str(row.get("pot_type", "")),
+            str(row.get("pfa_ip_oop", "")),
+            str(row.get("response_classified_action", "")),
+        )
+        groups[key].append(row)
+    for group in groups.values():
+        group.sort(key=lambda row: str(row.get("hand_id", "")))
+
+    sample: List[Dict[str, Any]] = []
+    keys = sorted(groups)
+    while keys and len(sample) < limit:
+        remaining_keys = []
+        for key in keys:
+            group = groups[key]
+            if group and len(sample) < limit:
+                sample.append(group.pop(0))
+            if group:
+                remaining_keys.append(key)
+        keys = remaining_keys
+    return sample
+
+
+def flop_cbet_exclusion_summary(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    counts = collections.Counter(
+        str(row.get("reason_excluded", ""))
+        for row in rows
+        if row.get("denominator_eligible") is not True
+    )
+    total = sum(counts.values())
+    return [
+        {
+            "reason_excluded": reason,
+            "hands": count,
+            "pct_of_excluded": round(safe_div(count, total) * 100.0, 1),
+        }
+        for reason, count in counts.most_common()
+    ]
+
+
 def markdown_table(rows: List[Dict[str, Any]], cols: List[str], max_rows: int = 80) -> str:
     if not rows:
         return "_No rows._"
@@ -1451,10 +1581,20 @@ def markdown_table(rows: List[Dict[str, Any]], cols: List[str], max_rows: int = 
     return "\n".join(lines)
 
 
+def import_headless_pyplot():
+    """Load pyplot with a non-interactive backend suitable for CI and servers."""
+    import matplotlib
+
+    matplotlib.use("Agg", force=True)
+    import matplotlib.pyplot as plt
+
+    return plt
+
+
 def plot_key_leaks(summary: List[Dict[str, Any]], benchmarks: Dict[str, Dict[str, Any]], outdir: Path, min_sample: int, max_rows: int = 12) -> List[str]:
     paths: List[str] = []
     try:
-        import matplotlib.pyplot as plt
+        plt = import_headless_pyplot()
     except Exception:
         return paths
     leaks = [r for r in summary if int(r.get("opportunities") or 0) >= min_sample and r.get("benchmark_flag") in {"LOW", "HIGH"}]
@@ -1494,11 +1634,15 @@ def plot_key_leaks(summary: List[Dict[str, Any]], benchmarks: Dict[str, Dict[str
 def plot_spot_pottype_heatmap(summary: List[Dict[str, Any]], outdir: Path, min_sample: int) -> List[str]:
     paths: List[str] = []
     try:
-        import matplotlib.pyplot as plt
+        plt = import_headless_pyplot()
         import numpy as np
     except Exception:
         return paths
-    rows = [r for r in summary if int(r.get("opportunities") or 0) >= min_sample and r.get("benchmark_flag") not in {"", "low_sample"}]
+    rows = [
+        r for r in summary
+        if int(r.get("opportunities") or 0) >= min_sample
+        and r.get("benchmark_flag") not in {"", "low_sample", "audit_required"}
+    ]
     if not rows:
         return paths
     # Keep the most useful spots by total sample.
@@ -1539,7 +1683,7 @@ def plot_spot_pottype_heatmap(summary: List[Dict[str, Any]], outdir: Path, min_s
 def plot_action_mix(summary: List[Dict[str, Any]], outdir: Path, spot_ids: Optional[List[str]] = None) -> List[str]:
     paths: List[str] = []
     try:
-        import matplotlib.pyplot as plt
+        plt = import_headless_pyplot()
     except Exception:
         return paths
     wanted = spot_ids or [
@@ -1583,7 +1727,7 @@ def plot_action_mix(summary: List[Dict[str, Any]], outdir: Path, spot_ids: Optio
 def plot_board_texture_heatmap(board_summary: List[Dict[str, Any]], benchmarks: Dict[str, Dict[str, Any]], outdir: Path, min_sample: int, spot_id: str = "OOP_RESPONSE_VS_IP_FLOP_STAB_AFTER_MISSED_CB") -> List[str]:
     paths: List[str] = []
     try:
-        import matplotlib.pyplot as plt
+        plt = import_headless_pyplot()
         import numpy as np
     except Exception:
         return paths
@@ -1641,54 +1785,70 @@ def generate_dashboard_html(outdir: Path, filters: Dict[str, Any], summary: List
             rel_charts.append(Path(p).relative_to(outdir).as_posix())
         except Exception:
             rel_charts.append(Path(p).as_posix())
+    def display_value(value: Any) -> str:
+        return f"{value:,}" if isinstance(value, int) else str(value)
+
     cards = [
-        ("Hands analyzed", filters.get("hands_analyzed_after_filters", "")),
-        ("Pool spot records", filters.get("pool_spot_records", "")),
+        ("Hands analyzed", display_value(filters.get("hands_analyzed_after_filters", ""))),
+        ("Decision nodes", display_value(filters.get("pool_spot_records", ""))),
         ("Stake filter", filters.get("stake_filter", "")),
-        ("Parse errors", filters.get("parse_errors", "")),
-        ("Hero as actor", filters.get("include_hero_as_population_actor", "")),
-        ("Game filter", filters.get("game_filter", "")),
+        ("Parse errors", display_value(filters.get("parse_errors", ""))),
+        ("Hero included", "yes" if filters.get("include_hero_as_population_actor") else "no"),
+        ("Game", str(filters.get("game_filter", "")).upper()),
     ]
-    chart_html = "\n".join(f"<figure><img src='{html_escape(c)}' alt='{html_escape(c)}'><figcaption>{html_escape(Path(c).stem.replace('_',' ').title())}</figcaption></figure>" for c in rel_charts)
+    chart_html = "\n".join(f"<figure><img src='{html_escape(c)}' alt='{html_escape(Path(c).stem.replace('_',' '))}'><figcaption>{html_escape(Path(c).stem.replace('_',' ').title())}</figcaption></figure>" for c in rel_charts)
+    if not chart_html:
+        chart_html = "<p class='empty'>Charts were disabled for this run.</p>"
     html_text = f"""<!doctype html>
-<html><head><meta charset='utf-8'><title>PLO Population Tendencies Dashboard</title>
+<html lang='en'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'><title>CoinPoker PLO Population Analyzer — Review Dashboard</title>
 <style>
-:root {{ --bg:#111318; --panel:#1b1f2a; --text:#edf1f7; --muted:#aeb6c2; --border:#303746; }}
-body {{ margin:0; font-family:Inter,Segoe UI,Arial,sans-serif; background:var(--bg); color:var(--text); line-height:1.45; }}
-main {{ max-width:1280px; margin:0 auto; padding:28px; }}
-h1 {{ margin:0 0 4px; font-size:32px; }}
-h2 {{ margin-top:34px; border-bottom:1px solid var(--border); padding-bottom:8px; }}
-.subtitle {{ color:var(--muted); margin:0 0 22px; }}
-.cards {{ display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px; margin:22px 0; }}
-.card {{ background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:14px 16px; }}
-.card .label {{ color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.06em; }}
-.card .value {{ font-size:22px; font-weight:700; margin-top:6px; }}
-.grid {{ display:grid; grid-template-columns:repeat(auto-fit,minmax(380px,1fr)); gap:18px; align-items:start; }}
-figure {{ background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:12px; margin:0; }}
-figcaption {{ color:var(--muted); font-size:12px; margin-top:8px; }}
-img {{ max-width:100%; height:auto; display:block; border-radius:8px; background:#fff; }}
-table {{ border-collapse:collapse; width:100%; font-size:12px; background:var(--panel); border-radius:12px; overflow:hidden; }}
-th,td {{ border-bottom:1px solid var(--border); padding:7px 9px; vertical-align:top; }}
-th {{ text-align:left; color:#dbe4f0; background:#242a37; position:sticky; top:0; }}
-tr.low td, tr.high td {{ font-weight:600; }}
-.note {{ color:var(--muted); }}
+:root {{ color-scheme:dark; --bg:#07100d; --panel:#0d1915; --panel2:#12221c; --text:#eef5ef; --muted:#9facaa; --border:#22352e; --green:#55d698; --amber:#efb85c; --red:#f27c6f; }}
+* {{ box-sizing:border-box; }}
+body {{ margin:0; font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif; background:radial-gradient(circle at 85% 0%,rgba(52,145,98,.13),transparent 30rem),var(--bg); color:var(--text); line-height:1.5; }}
+main {{ max-width:1320px; margin:0 auto; padding:clamp(20px,4vw,52px); }}
+.eyebrow {{ color:var(--green); font-size:12px; font-weight:800; letter-spacing:.13em; text-transform:uppercase; }}
+h1 {{ margin:12px 0 8px; max-width:800px; font-size:clamp(38px,6vw,68px); line-height:1; letter-spacing:-.055em; }}
+h2 {{ margin:52px 0 18px; font-size:clamp(24px,3vw,34px); letter-spacing:-.035em; }}
+.subtitle {{ max-width:760px; color:var(--muted); margin:0 0 30px; font-size:17px; }}
+.cards {{ display:grid; grid-template-columns:repeat(6,1fr); gap:1px; margin:34px 0 12px; overflow:hidden; border:1px solid var(--border); border-radius:16px; background:var(--border); }}
+.card {{ background:rgba(13,25,21,.97); padding:20px; }}
+.card .label {{ color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:.09em; }}
+.card .value {{ font-size:24px; font-weight:760; letter-spacing:-.035em; margin-top:7px; }}
+.grid {{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; align-items:start; }}
+figure {{ background:linear-gradient(145deg,var(--panel2),var(--panel)); border:1px solid var(--border); border-radius:16px; padding:12px; margin:0; }}
+figcaption {{ color:var(--muted); font-size:12px; margin:9px 4px 3px; }}
+img {{ max-width:100%; height:auto; display:block; border-radius:10px; background:#fff; }}
+.table-wrap {{ width:100%; overflow:auto; border:1px solid var(--border); border-radius:14px; }}
+table {{ border-collapse:collapse; width:100%; min-width:900px; font-size:12px; background:var(--panel); }}
+th,td {{ border-bottom:1px solid var(--border); padding:9px 11px; vertical-align:top; }}
+th {{ text-align:left; color:#dce8e1; background:#162820; position:sticky; top:0; white-space:nowrap; }}
+tr:last-child td {{ border-bottom:0; }} tr:hover td {{ background:#10221b; }}
+tr.low td, tr.high td {{ font-weight:640; }} tr.low td:first-child, tr.high td:first-child {{ border-left:3px solid var(--amber); }}
+tr.audit_required td:first-child {{ border-left:3px solid var(--red); }}
+.method {{ display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:18px; }}
+.note {{ margin:0; padding:20px; color:var(--muted); border:1px solid var(--border); border-radius:14px; background:var(--panel); }}
+.note strong {{ color:var(--text); }} .empty {{ color:var(--muted); }}
 .code {{ font-family:ui-monospace,Consolas,monospace; }}
-a {{ color:#a9c7ff; }}
+a {{ color:var(--green); }}
+@media(max-width:1000px) {{ .cards {{ grid-template-columns:repeat(3,1fr); }} }}
+@media(max-width:760px) {{ .grid,.method {{ grid-template-columns:1fr; }} .cards {{ grid-template-columns:repeat(2,1fr); }} }}
+@media(max-width:460px) {{ .cards {{ grid-template-columns:1fr; }} }}
 </style></head><body><main>
-<h1>PLO Population Tendencies Dashboard</h1>
-<p class='subtitle'>Privacy-preserving aggregate analysis of anonymized PLO hand histories. No per-player profiling.</p>
+<div class='eyebrow'>Aggregate review dashboard</div>
+<h1>CoinPoker PLO Population Analyzer</h1>
+<p class='subtitle'>Privacy-conscious analysis of anonymized hand histories. Frequencies are grouped at population level; no per-player profiles are created.</p>
 <section class='cards'>
 {''.join(f"<div class='card'><div class='label'>{html_escape(k)}</div><div class='value'>{html_escape(v)}</div></div>" for k,v in cards)}
 </section>
-<h2>Executive summary: top exploit candidates</h2>
+<h2>Priority review candidates</h2>
 {html_table(leak_rows, top_cols, max_rows=12)}
-<h2>Charts</h2>
+<h2>Pattern overview</h2>
 <div class='grid'>{chart_html}</div>
-<h2>Overall spot summary</h2>
+<h2>All decision nodes</h2>
 {html_table(summary, summary_cols, max_rows=160)}
-<h2>Methodology note</h2>
-<p class='note'>Benchmark bands are practical review bands, not solver truth. Flags are exploit candidates, not automatic strategy changes. Inspect CSV rows and hand IDs before making large adjustments.</p>
-<p class='note'>Generated files: <span class='code'>pool_summary.csv</span>, <span class='code'>pool_summary_by_board.csv</span>, <span class='code'>pool_summary_by_position.csv</span>, <span class='code'>pool_summary_by_ip_oop.csv</span>, <span class='code'>pool_summary_by_facing_size.csv</span>, <span class='code'>pool_spots.csv</span>.</p>
+<h2>How to read this report</h2>
+<div class='method'><p class='note'><strong>Review bands, not ground truth.</strong><br>LOW and HIGH mark observations outside configurable practical bands. <span class='code'>audit_required</span> suppresses interpretation when a definition remains unresolved. These labels are not solver outputs or automatic strategy changes.</p>
+<p class='note'><strong>Traceable by design.</strong><br>The local report folder also contains exact filters, benchmark definitions, aggregate splits and <span class='code'>pool_spots.csv</span> for source-hand review. Never publish granular files from real data without a privacy review.</p></div>
 </main></body></html>"""
     (outdir / "pool_dashboard.html").write_text(html_text, encoding="utf-8")
 
@@ -1696,7 +1856,7 @@ a {{ color:#a9c7ff; }}
 def write_stake_comparison(comparison_rows: List[Dict[str, Any]], outdir: Path, stakes: List[str]) -> None:
     write_csv(comparison_rows, outdir / "stake_comparison.csv")
     try:
-        import matplotlib.pyplot as plt
+        plt = import_headless_pyplot()
     except Exception:
         return
     # Pick most stable rows with values for at least 2 stakes.
@@ -1750,6 +1910,9 @@ def pass_filters(h: Hand, args: argparse.Namespace) -> bool:
             return False
     else:
         raise ValueError(f"Unknown game filter: {args.game_filter}")
+
+    if h.meta.get("is_straddled") and not getattr(args, "include_straddles", False):
+        return False
 
     if args.stake_filter:
         allowed = {x.strip().upper() for x in args.stake_filter.split(",") if x.strip()}
@@ -1807,12 +1970,26 @@ def analyze_pool(input_path: Path, outdir: Path, args: argparse.Namespace) -> Di
     (outdir / "benchmarks_used.json").write_text(json.dumps(benchmarks, indent=2, ensure_ascii=False), encoding="utf-8")
     write_default_benchmarks(outdir / "benchmarks.default.json")
 
+    audit_rows: List[Dict[str, Any]] = []
+    if getattr(args, "audit_flop_cbet", False):
+        audit_rows = [make_flop_cbet_audit_row(hand) for hand in hands]
+        write_csv(audit_rows, outdir / "audit_fold_to_flop_cbet.csv")
+        write_csv(
+            stratified_flop_cbet_sample(audit_rows, int(getattr(args, "audit_sample_size", 100))),
+            outdir / "audit_fold_to_flop_cbet_included_sample.csv",
+        )
+        write_csv(
+            flop_cbet_exclusion_summary(audit_rows),
+            outdir / "audit_fold_to_flop_cbet_exclusion_summary.csv",
+        )
+
     filters = {
-        "input": str(input_path),
+        "input": input_path.name,
         "hero_screen_name": args.hero,
         "include_hero_as_population_actor": args.include_hero,
         "game_filter": args.game_filter,
         "include_bombpot": args.include_bombpot,
+        "include_straddles": bool(getattr(args, "include_straddles", False)),
         "stake_filter": args.stake_filter or "all",
         "date_from": args.date_from or "none",
         "date_to": args.date_to or "none",
@@ -1820,6 +1997,8 @@ def analyze_pool(input_path: Path, outdir: Path, args: argparse.Namespace) -> Di
         "hands_analyzed_after_filters": len(hands),
         "pool_spot_records": len(records),
         "parse_errors": parse_errors,
+        "flop_cbet_audit_enabled": bool(getattr(args, "audit_flop_cbet", False)),
+        "flop_cbet_denominator_hands": sum(1 for row in audit_rows if row.get("denominator_eligible") is True),
         "note": "Population-only aggregation. No per-player tendency file is produced. Hero actions are excluded by default unless --include-hero is used.",
     }
     (outdir / "filters_applied.json").write_text(json.dumps(filters, indent=2, ensure_ascii=False), encoding="utf-8")
@@ -1849,6 +2028,7 @@ def analyze_pool(input_path: Path, outdir: Path, args: argparse.Namespace) -> Di
     md.append("## Active filters")
     md.append(f"- Game filter: **{args.game_filter}**")
     md.append(f"- Include bombpot: **{args.include_bombpot}**")
+    md.append(f"- Include straddled hands: **{bool(getattr(args, 'include_straddles', False))}**")
     md.append(f"- Stake filter: **{args.stake_filter or 'all'}**")
     md.append(f"- Date from: **{args.date_from or 'none'}**")
     md.append(f"- Date to: **{args.date_to or 'none'}**")
@@ -1895,6 +2075,10 @@ def analyze_pool(input_path: Path, outdir: Path, args: argparse.Namespace) -> Di
     md.append("- `pool_spots.csv` — individual anonymized spot records, with hand IDs for review")
     md.append("- `benchmarks_used.json` — benchmark bands used for leak flags")
     md.append("- `filters_applied.json` — exact filters and parse counts")
+    if getattr(args, "audit_flop_cbet", False):
+        md.append("- `audit_fold_to_flop_cbet.csv` — opt-in local audit of every analyzed hand, including explicit denominator inclusion/exclusion reasons")
+        md.append("- `audit_fold_to_flop_cbet_included_sample.csv` — deterministic stratified sample for manual hand review")
+        md.append("- `audit_fold_to_flop_cbet_exclusion_summary.csv` — counts by exclusion reason")
 
     report_md = "\n".join(md)
     (outdir / "pool_report.md").write_text(report_md, encoding="utf-8")
@@ -1944,8 +2128,9 @@ def build_stake_comparison(results: List[Dict[str, Any]], stakes: List[str], ben
     (outdir / "stake_comparison.md").write_text("\n".join(md), encoding="utf-8")
 
 
-def main() -> None:
+def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description="PLO population tendency analyzer with dashboard/charts")
+    p.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     p.add_argument("--input", required=True, help="CoinPoker hand history txt file")
     p.add_argument("--hero", default="Hero", help="Hero screen name in HH, usually Hero")
     p.add_argument("--include-hero", action="store_true", help="Include Hero's own decisions as population records. Default excludes Hero as actor.")
@@ -1953,14 +2138,25 @@ def main() -> None:
     p.add_argument("--min-sample", type=int, default=30, help="Minimum sample for benchmark leak flags")
     p.add_argument("--game-filter", default="plo4", choices=["plo4", "plo5", "bombpot", "all"], help="Default is plo4 regular only")
     p.add_argument("--include-bombpot", action="store_true", help="Include BombPot hands with plo4/plo5/all filters")
+    p.add_argument("--include-straddles", action="store_true", help="Include straddled hands. Default excludes them until straddle-specific nodes are validated")
     p.add_argument("--stake-filter", default="", help="Comma-separated stakes, e.g. PL25,PL50")
     p.add_argument("--date-from", default="", help="YYYY-MM-DD inclusive")
     p.add_argument("--date-to", default="", help="YYYY-MM-DD inclusive")
     p.add_argument("--benchmarks", default="", help="Optional JSON benchmark override file")
     p.add_argument("--debug-players", action="store_true", help="Write anonymized actor/aggressor IDs to pool_spots.csv for debugging. Off by default.")
-    p.add_argument("--no-charts", action="store_true", help="Skip PNG chart generation and dashboard images")
+    p.add_argument("--audit-flop-cbet", action="store_true", help="Write a local FOLD_TO_FLOP_CBET denominator audit with player IDs and exact flop action lines")
+    p.add_argument("--audit-sample-size", type=int, default=100, help="Maximum included hands in the stratified flop c-bet audit sample")
+    p.add_argument("--no-charts", action="store_true", help="Skip PNG chart generation; the HTML dashboard is still written")
     p.add_argument("--compare-stakes", default="", help="Run separate reports and a comparison for comma-separated stakes, e.g. PL25,PL50,PL100")
-    args = p.parse_args()
+    return p
+
+
+def main(argv: Optional[List[str]] = None) -> None:
+    p = build_parser()
+    args = p.parse_args(argv)
+    input_path = Path(args.input)
+    if not input_path.is_file():
+        p.error(f"input file not found: {input_path}")
 
     if args.compare_stakes:
         stakes = [x.strip().upper() for x in args.compare_stakes.split(",") if x.strip()]
@@ -1974,7 +2170,7 @@ def main() -> None:
             sub_args.stake_filter = st
             sub_args.outdir = str(root / st)
             print(f"Running stake {st}...")
-            results.append(analyze_pool(Path(args.input), Path(sub_args.outdir), sub_args))
+            results.append(analyze_pool(input_path, Path(sub_args.outdir), sub_args))
         benchmarks = load_benchmarks(args.benchmarks)
         build_stake_comparison(results, stakes, benchmarks, root)
         print("Done.")
@@ -1982,7 +2178,7 @@ def main() -> None:
         print("Open stake_comparison.md and charts/stake_comparison.png.")
         return
 
-    result = analyze_pool(Path(args.input), Path(args.outdir), args)
+    result = analyze_pool(input_path, Path(args.outdir), args)
     print("Done.")
     print(f"Raw hands before filters: {result['raw_hands_before_filters']:,}")
     print(f"Hands analyzed after filters: {result['hands_analyzed_after_filters']:,}")

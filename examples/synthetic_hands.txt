@@ -1,0 +1,168 @@
+CoinPoker Hand #9000000001: PLO 4 (₮0.25/₮0.50/₮0.05) 2026/01/10 20:00:00 CET
+Table 'SYNTHETIC-01' 6-max Seat #1 is the button
+Seat 1: PlayerAlpha (₮75.00 in chips)
+Seat 2: Hero (₮50.00 in chips)
+Seat 3: PlayerBeta (₮62.00 in chips)
+Seat 4: PlayerGamma (₮80.00 in chips)
+Seat 5: PlayerDelta (₮54.00 in chips)
+Seat 6: PlayerEpsilon (₮49.00 in chips)
+PlayerAlpha: posts ante ₮0.05
+Hero: posts ante ₮0.05
+PlayerBeta: posts ante ₮0.05
+PlayerGamma: posts ante ₮0.05
+PlayerDelta: posts ante ₮0.05
+PlayerEpsilon: posts ante ₮0.05
+Hero: posts small blind ₮0.25
+PlayerBeta: posts big blind ₮0.50
+*** HOLE CARDS ***
+Dealt to PlayerAlpha
+Dealt to Hero [9c 8c 7d 6d]
+Dealt to PlayerBeta
+Dealt to PlayerGamma
+Dealt to PlayerDelta
+Dealt to PlayerEpsilon
+PlayerGamma: raises ₮0.75 to ₮1.25
+PlayerDelta: folds
+PlayerEpsilon: raises ₮3.25 to ₮4.00
+PlayerAlpha: folds
+Hero: folds
+PlayerBeta: folds
+PlayerGamma: raises ₮8.00 to ₮12.00
+PlayerEpsilon: folds
+PlayerGamma: RETURN ₮8.00
+*** SHOWDOWN ***
+PlayerGamma: shows [As Ah Kd Qd]
+PlayerGamma collected ₮8.80 from pot
+*** SUMMARY ***
+Total pot ₮9.10 | Rake ₮0.25 | Splash Fee ₮0.05
+Seat 4: PlayerGamma showed [As Ah Kd Qd] and won (₮8.80)
+
+CoinPoker Hand #9000000002: PLO 4 (₮0.25/₮0.50/₮0.05) 2026/01/10 20:03:00 CET
+Table 'SYNTHETIC-01' 6-max Seat #3 is the button
+Seat 1: PlayerAlpha (₮75.00 in chips)
+Seat 2: PlayerBeta (₮62.00 in chips)
+Seat 3: Hero (₮50.00 in chips)
+Seat 4: PlayerGamma (₮80.00 in chips)
+Seat 5: PlayerDelta (₮54.00 in chips)
+Seat 6: PlayerEpsilon (₮49.00 in chips)
+PlayerAlpha: posts ante ₮0.05
+PlayerBeta: posts ante ₮0.05
+Hero: posts ante ₮0.05
+PlayerGamma: posts ante ₮0.05
+PlayerDelta: posts ante ₮0.05
+PlayerEpsilon: posts ante ₮0.05
+PlayerGamma: posts small blind ₮0.25
+PlayerDelta: posts big blind ₮0.50
+*** HOLE CARDS ***
+Dealt to PlayerAlpha
+Dealt to PlayerBeta
+Dealt to Hero [Ah 8d 7d 6s]
+Dealt to PlayerGamma
+Dealt to PlayerDelta
+Dealt to PlayerEpsilon
+PlayerEpsilon: folds
+PlayerAlpha: folds
+PlayerBeta: folds
+Hero: raises ₮0.75 to ₮1.25
+PlayerGamma: calls ₮1.00
+PlayerDelta: folds
+*** FLOP *** [As 7h 2c]
+PlayerGamma: checks
+Hero: bets ₮1.80
+PlayerGamma: folds
+Hero: RETURN ₮1.80
+*** SHOWDOWN ***
+Hero collected ₮3.25 from pot
+*** SUMMARY ***
+Total pot ₮3.40 | Rake ₮0.10 | Splash Fee ₮0.05
+Seat 3: Hero won (₮3.25)
+
+CoinPoker Hand #9000000003: PLO 4 (₮0.25/₮0.50/₮0.05) 2026/01/10 20:06:00 CET
+Table 'SYNTHETIC-01' 6-max Seat #6 is the button
+Seat 1: PlayerAlpha (₮75.00 in chips)
+Seat 2: PlayerBeta (₮62.00 in chips)
+Seat 3: Hero (₮50.00 in chips)
+Seat 4: PlayerGamma (₮80.00 in chips)
+Seat 5: PlayerDelta (₮54.00 in chips)
+Seat 6: PlayerEpsilon (₮49.00 in chips)
+PlayerAlpha: posts ante ₮0.05
+PlayerBeta: posts ante ₮0.05
+Hero: posts ante ₮0.05
+PlayerGamma: posts ante ₮0.05
+PlayerDelta: posts ante ₮0.05
+PlayerEpsilon: posts ante ₮0.05
+PlayerAlpha: posts small blind ₮0.25
+PlayerBeta: posts big blind ₮0.50
+*** HOLE CARDS ***
+Dealt to PlayerAlpha
+Dealt to PlayerBeta
+Dealt to Hero [Ks Qs Jd Td]
+Dealt to PlayerGamma
+Dealt to PlayerDelta
+Dealt to PlayerEpsilon
+Hero: folds
+PlayerGamma: folds
+PlayerDelta: raises ₮0.75 to ₮1.25
+PlayerEpsilon: calls ₮1.25
+PlayerAlpha: folds
+PlayerBeta: folds
+*** FLOP *** [Kd 9c 3s]
+PlayerDelta: checks
+PlayerEpsilon: checks
+*** TURN *** [Kd 9c 3s] [2h]
+PlayerDelta: checks
+PlayerEpsilon: bets ₮2.10
+PlayerDelta: calls ₮2.10
+*** RIVER *** [Kd 9c 3s 2h] [7c]
+PlayerDelta: checks
+PlayerEpsilon: checks
+*** SHOWDOWN ***
+PlayerDelta: shows [Ac Ad 8h 4h]
+PlayerEpsilon: shows [Kh Qc Jh Tc]
+PlayerDelta collected ₮7.20 from pot
+*** SUMMARY ***
+Total pot ₮7.50 | Rake ₮0.25 | Splash Fee ₮0.05
+Seat 5: PlayerDelta showed [Ac Ad 8h 4h] and won (₮7.20)
+
+CoinPoker Hand #9000000004: PLO 4 (₮0.25/₮0.50/₮0.05) 2026/01/10 20:09:00 CET
+Table 'SYNTHETIC-01' 6-max Seat #2 is the button
+Seat 1: PlayerAlpha (₮75.00 in chips)
+Seat 2: PlayerBeta (₮62.00 in chips)
+Seat 3: Hero (₮50.00 in chips)
+Seat 4: PlayerGamma (₮80.00 in chips)
+Seat 5: PlayerDelta (₮54.00 in chips)
+Seat 6: PlayerEpsilon (₮49.00 in chips)
+PlayerAlpha: posts ante ₮0.05
+PlayerBeta: posts ante ₮0.05
+Hero: posts ante ₮0.05
+PlayerGamma: posts ante ₮0.05
+PlayerDelta: posts ante ₮0.05
+PlayerEpsilon: posts ante ₮0.05
+Hero: posts small blind ₮0.25
+PlayerGamma: posts big blind ₮0.50
+*** HOLE CARDS ***
+Dealt to PlayerAlpha
+Dealt to PlayerBeta
+Dealt to Hero [Qc Qd 6h 5h]
+Dealt to PlayerGamma
+Dealt to PlayerDelta
+Dealt to PlayerEpsilon
+PlayerDelta: folds
+PlayerEpsilon: folds
+PlayerAlpha: raises ₮0.75 to ₮1.25
+PlayerBeta: folds
+Hero: folds
+PlayerGamma: calls ₮0.75
+*** FLOP *** [Js 8s 4d]
+PlayerGamma: checks
+PlayerAlpha: checks
+*** TURN *** [Js 8s 4d] [Kh]
+PlayerGamma: bets ₮1.80
+PlayerAlpha: folds
+PlayerGamma: RETURN ₮1.80
+*** SHOWDOWN ***
+PlayerGamma collected ₮3.25 from pot
+*** SUMMARY ***
+Total pot ₮3.40 | Rake ₮0.10 | Splash Fee ₮0.05
+Seat 4: PlayerGamma won (₮3.25)
+
