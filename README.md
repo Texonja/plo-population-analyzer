@@ -6,7 +6,7 @@ CoinPoker-specific, privacy-conscious population analysis for Pot-Limit Omaha ha
 
 ## Preview — no setup required
 
-On Windows, extract the repository and double-click **`START.bat`**. It opens the complete case study and its aggregate dashboards in the default browser. Python, a terminal and access to private hand histories are not required for the portfolio preview.
+On Windows, extract the repository and double-click **`START.bat`**. It opens the complete case study and its aggregate dashboards in the default browser. Python, a terminal and access to private hand histories are not required for the preview.
 
 The installation commands below are only for analysts who want to process their own CoinPoker exports.
 

@@ -10,7 +10,7 @@ Hand histories can contain pseudonymous player identifiers, timestamps, table id
 4. Publish only aggregate summaries or deliberately sanitized fixtures.
 5. Keep access controls and retention periods aligned with the data owner's policy.
 
-The repository ignores common hand-history paths and generated report directories. The committed `examples/synthetic_hands.txt` file is fabricated, and the portfolio dashboard contains aggregate statistics only.
+The repository ignores common hand-history paths and generated report directories. The committed `examples/synthetic_hands.txt` file is fabricated, and the public demo dashboard contains aggregate statistics only.
 
 ## Output sensitivity
 
